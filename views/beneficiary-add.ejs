@@ -91,6 +91,65 @@
         .error-message.show {
             display: block;
         }
+        .occupation-dropdown {
+            position: relative;
+        }
+        .occupation-toggle {
+            width: 100%;
+            text-align: left;
+            border-radius: 12px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+            font-size: 1rem;
+            color: #212529;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+        .occupation-toggle:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .occupation-toggle.is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        .occupation-options {
+            position: absolute;
+            z-index: 1050;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            width: 100%;
+            padding: 0.5rem 0;
+            margin-top: 2px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .occupation-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            cursor: pointer;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .occupation-option label:hover {
+            background: #f0f4ff;
+        }
+        .select-all-option label {
+            padding: 6px 14px 4px;
+        }
+        .occupation-option-divider {
+            border-top: 1px solid #dee2e6;
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body>
@@ -188,6 +247,11 @@
                             <input type="text" class="form-control" id="location" name="location" placeholder="Current staying location">
                             <div class="error-message" id="location-error">Location / Whereabouts is required</div>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Native Place Address</label>
+                            <input type="text" class="form-control" id="native_place" name="native_place" placeholder="Village / Town / City of origin">
+                            <div class="error-message" id="native_place-error">Native Place Address is required</div>
+                        </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Health Status</label>
                             <input type="text" class="form-control" id="health_status" name="health_status" placeholder="e.g. Good, Sick">
@@ -200,12 +264,29 @@
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Occupation (Select)</label>
-                            <select class="form-select" id="occupation_id" name="occupation_id" multiple size="4">
-                                <% jobTypes.forEach(job => { %>
-                                    <option value="<%= job.id %>"><%= job.job_type_name %></option>
-                                <% }); %>
-                            </select>
-                            <div class="help mt-1">Hold Ctrl/Cmd to select multiple types.</div>
+                            <input type="hidden" id="occupation_id" name="occupation_id">
+                            <div class="occupation-dropdown" id="occupationDropdown">
+                                <button type="button" class="occupation-toggle form-select text-start" id="occupationToggle" onclick="toggleOccupationDropdown()">
+                                    <span id="occupationDisplay">Select occupation(s)</span>
+                                </button>
+                                <div class="occupation-options" id="occupationOptions" style="display:none;">
+                                    <div class="occupation-option select-all-option">
+                                        <label>
+                                            <input type="checkbox" id="selectAllOccupations" onchange="toggleSelectAll(this)">
+                                            <strong>Select All / Deselect All</strong>
+                                        </label>
+                                    </div>
+                                    <div class="occupation-option-divider"></div>
+                                    <% jobTypes.forEach(job => { %>
+                                    <div class="occupation-option">
+                                        <label>
+                                            <input type="checkbox" class="occupation-checkbox" value="<%= job.id %>" data-label="<%= job.job_type_name %>" onchange="updateOccupationValue()">
+                                            <%= job.job_type_name %>
+                                        </label>
+                                    </div>
+                                    <% }); %>
+                                </div>
+                            </div>
                             <div class="error-message" id="occupation_id-error">Occupation is required - please select at least one option</div>
                         </div>
                         <div class="col-12 col-md-6">
@@ -270,22 +351,18 @@
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Name of the Shelter</label>
                             <input type="text" class="form-control" id="shelterName">
-                            <div class="error-message" id="shelterName-error">Name of the Shelter is required</div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Location</label>
                             <input type="text" class="form-control" id="shelterLocation">
-                            <div class="error-message" id="shelterLocation-error">Shelter Location is required</div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Name of the ULB</label>
                             <input type="text" class="form-control" id="ulbName" value="Municipal Corporation">
-                            <div class="error-message" id="ulbName-error">Name of the ULB is required</div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Ward No</label>
                             <input type="text" class="form-control" id="wardNo">
-                            <div class="error-message" id="wardNo-error">Ward No is required</div>
                         </div>
                     </div>
 
@@ -293,7 +370,6 @@
                         <div class="col-12 col-md-12">
                             <label class="form-label fw-semibold">Shelter Management Agency Name</label>
                             <input type="text" class="form-control" id="agencyName">
-                            <div class="error-message" id="agencyName-error">Shelter Management Agency Name is required</div>
                         </div>
                         
                     </div>
@@ -311,6 +387,41 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // --- Occupation checkbox dropdown ---
+        function toggleOccupationDropdown() {
+            const opts = document.getElementById('occupationOptions');
+            opts.style.display = opts.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateOccupationValue() {
+            const checkboxes = document.querySelectorAll('.occupation-checkbox');
+            const selected = Array.from(checkboxes).filter(c => c.checked);
+            const ids = selected.map(c => c.value).join(',');
+            const labels = selected.map(c => c.dataset.label).join(', ');
+            document.getElementById('occupation_id').value = ids;
+            document.getElementById('occupationDisplay').textContent = labels || 'Select occupation(s)';
+            // Update "select all" checkbox state
+            document.getElementById('selectAllOccupations').checked = selected.length === checkboxes.length;
+            // Clear validation error if something is selected
+            if (ids) {
+                document.getElementById('occupationToggle').classList.remove('is-invalid');
+                document.getElementById('occupation_id-error').classList.remove('show');
+            }
+        }
+
+        function toggleSelectAll(selectAllCb) {
+            const checkboxes = document.querySelectorAll('.occupation-checkbox');
+            checkboxes.forEach(cb => { cb.checked = selectAllCb.checked; });
+            updateOccupationValue();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('occupationDropdown');
+            if (!dropdown.contains(e.target)) {
+                document.getElementById('occupationOptions').style.display = 'none';
+            }
+        });
         let uploadedPhotoData = null;
         
         // Form validation before submission
@@ -328,9 +439,10 @@
                 { id: 'children_count', label: 'No. of Children' },
                 { id: 'id_mark', label: 'Identification Mark' },
                 { id: 'location', label: 'Location / Whereabouts' },
+                { id: 'native_place', label: 'Native Place Address' },
                 { id: 'health_status', label: 'Health Status' },
                 { id: 'habits', label: 'Habits' },
-                { id: 'occupation_id', label: 'Occupation', type: 'select' },
+                { id: 'occupation_id', label: 'Occupation', type: 'occupation' },
                 { id: 'occupation_place', label: 'Place of Occupation' },
                 { id: 'reference_name', label: 'Reference Person Name' },
                 { id: 'reference_address', label: 'Reference Address' },
@@ -338,11 +450,6 @@
                 { id: 'reason_ulb', label: 'Reason for ULB Stay' },
                 { id: 'stay_type', label: 'Stay Type' },
                 { id: 'remarks', label: 'Remarks / Special Attention' },
-                { id: 'shelterName', label: 'Name of the Shelter' },
-                { id: 'shelterLocation', label: 'Shelter Location' },
-                { id: 'ulbName', label: 'Name of the ULB' },
-                { id: 'agencyName', label: 'Shelter Management Agency Name' },
-                { id: 'wardNo', label: 'Ward No' }
             ];
             
             let isValid = true;
@@ -363,8 +470,8 @@
                     if (!element.files || element.files.length === 0) {
                         fieldInvalid = true;
                     }
-                } else if (field.type === 'select') {
-                    if (!element.selectedOptions || element.selectedOptions.length === 0) {
+                } else if (field.type === 'occupation') {
+                    if (!element.value || element.value.trim() === '') {
                         fieldInvalid = true;
                     }
                 } else {
@@ -372,10 +479,14 @@
                         fieldInvalid = true;
                     }
                 }
-                
+
                 if (fieldInvalid) {
                     isValid = false;
-                    element.classList.add('is-invalid');
+                    if (field.type === 'occupation') {
+                        document.getElementById('occupationToggle').classList.add('is-invalid');
+                    } else {
+                        element.classList.add('is-invalid');
+                    }
                     if (field.id === 'photoInput') {
                         document.querySelector('.photo-upload-container').classList.add('is-invalid');
                     }
@@ -386,7 +497,11 @@
                         firstInvalidField = element;
                     }
                 } else {
-                    element.classList.remove('is-invalid');
+                    if (field.type === 'occupation') {
+                        document.getElementById('occupationToggle').classList.remove('is-invalid');
+                    } else {
+                        element.classList.remove('is-invalid');
+                    }
                     if (field.id === 'photoInput') {
                         document.querySelector('.photo-upload-container').classList.remove('is-invalid');
                     }
@@ -450,11 +565,9 @@
         
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
-            
-            // Get selected occupation types
-            const occupationSelect = document.getElementById('occupation_id');
-            const selectedOptions = Array.from(occupationSelect.selectedOptions);
-            const occupationText = selectedOptions.map(opt => opt.text).join(', ');
+
+            // Get selected occupation labels from display span
+            const occupationText = document.getElementById('occupationDisplay').textContent.replace('Select occupation(s)', '');
             
             const d = {
                 beneficiary_name: document.getElementById('beneficiary_name').value,
@@ -466,6 +579,7 @@
                 children_count: document.getElementById('children_count').value,
                 id_mark: document.getElementById('id_mark').value,
                 location: document.getElementById('location').value,
+                native_place: document.getElementById('native_place').value,
                 health_status: document.getElementById('health_status').value,
                 habits: document.getElementById('habits').value,
                 occupation_id: occupationText,
@@ -605,6 +719,7 @@
             field('Personal Identification Mark:', d.id_mark, startX, fullW);
             
             field('Location/Whereabouts:', d.location, startX, fullW, true);
+            field('Native Place Address:', d.native_place, startX, fullW, true);
             field('Occupation/Activity:', d.occupation_id, startX, fullW, true);
             field('Place of Occupation/Activity:', d.occupation_place, startX, fullW, true);
             field('Reference Person Name:', d.reference_name, startX, fullW);
