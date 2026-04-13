@@ -1,5 +1,5 @@
 // filepath: c:\jhanvi-foundation-digital-dashboard-fork\config\db.js
-require("dotenv").config();
+// require("dotenv").config();
 const mysql = require("mysql2/promise");
 
 const db = mysql.createPool({
