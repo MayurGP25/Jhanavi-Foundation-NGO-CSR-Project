@@ -45,6 +45,7 @@ exports.addBeneficiary = async (req, res) => {
         habits,
         occupation_id,
         occupation_place,
+        native_place,
         reference_name,
         reference_address,
         contact_no,
@@ -60,12 +61,12 @@ exports.addBeneficiary = async (req, res) => {
         await db.query(
             `INSERT INTO beneficiaries
             (beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
-             location, health_status, habits, occupation_id, occupation_place, reference_name, reference_address,
+             location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
              contact_no, reason_ulb, stay_type, remarks, photo, employment_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
             [beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
-             location, health_status, habits, occupation_id, occupation_place, reference_name, reference_address,
+             location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
              contact_no, reason_ulb, stay_type, remarks, photo, 'unemployed']
         );
 
@@ -94,10 +95,9 @@ exports.viewBeneficiaries = async (req, res) => {
       // ...existing code...
 let sql = `
   SELECT b.id, b.beneficiary_name, b.guardian_name, b.age, b.gender, b.education, b.marital_status, b.children_count,
-         b.location, b.health_status, b.occupation_id, jt.job_type_name, b.occupation_place, b.reference_name, 
+         b.location, b.health_status, b.occupation_id, b.occupation_place, b.reference_name,
          b.reference_address, b.contact_no, b.stay_type, b.remarks, b.employment_status, b.photo
   FROM beneficiaries b
-  LEFT JOIN job_types jt ON b.occupation_id = jt.id
 `;
 // ...existing code...
         let params = [];
@@ -145,10 +145,12 @@ let sql = `
         }
 
         const [rows] = await db.query(sql, params);
+        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
 
         res.render("beneficiary-view", {
             user: req.session.user,
             beneficiaries: rows,
+            jobTypes,
             searchQuery,
             filters: {
                 gender,
@@ -201,10 +203,9 @@ exports.showEditList = async (req, res) => {
 // ...existing code...
 let sql = `
   SELECT b.id, b.beneficiary_name, b.guardian_name, b.age, b.gender, b.education, b.marital_status, b.children_count,
-         b.location, b.health_status, b.occupation_id, jt.job_type_name, b.occupation_place, b.reference_name, 
+         b.location, b.health_status, b.occupation_id, b.occupation_place, b.reference_name,
          b.reference_address, b.contact_no, b.stay_type, b.remarks, b.employment_status
   FROM beneficiaries b
-  LEFT JOIN job_types jt ON b.occupation_id = jt.id
 `;
 // ...existing code...
         let params = [];
@@ -252,10 +253,12 @@ let sql = `
         }
 
         const [rows] = await db.query(sql, params);
+        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
 
         res.render("beneficiary-edit-list", {
             user: req.session.user,
             beneficiaries: rows,
+            jobTypes,
             searchQuery,
             filters: {
                 gender,
@@ -316,6 +319,7 @@ exports.updateBeneficiary = async (req, res) => {
         habits,
         occupation_id,
         occupation_place,
+        native_place,
         reference_name,
         reference_address,
         contact_no,
@@ -328,16 +332,16 @@ exports.updateBeneficiary = async (req, res) => {
     const photo = req.file ? req.file.buffer : null;
 
     try {
-        let sql = `UPDATE beneficiaries SET 
-            beneficiary_name = ?, guardian_name = ?, age = ?, gender = ?, education = ?, 
-            marital_status = ?, children_count = ?, id_mark = ?, location = ?, health_status = ?, 
-            habits = ?, occupation_id = ?, occupation_place = ?, reference_name = ?, 
+        let sql = `UPDATE beneficiaries SET
+            beneficiary_name = ?, guardian_name = ?, age = ?, gender = ?, education = ?,
+            marital_status = ?, children_count = ?, id_mark = ?, location = ?, health_status = ?,
+            habits = ?, occupation_id = ?, occupation_place = ?, native_place = ?, reference_name = ?,
             reference_address = ?, contact_no = ?, reason_ulb = ?, stay_type = ?, remarks = ?, employment_status = ?`;
-        
+
         const params = [
-            beneficiary_name, guardian_name, age, gender, education, marital_status, 
-            children_count, id_mark, location, health_status, habits, occupation_id, 
-            occupation_place, reference_name, reference_address, contact_no, 
+            beneficiary_name, guardian_name, age, gender, education, marital_status,
+            children_count, id_mark, location, health_status, habits, occupation_id,
+            occupation_place, native_place, reference_name, reference_address, contact_no,
             reason_ulb, stay_type, remarks, employment_status || 'Unemployed'
         ];
 

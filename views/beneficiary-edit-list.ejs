@@ -238,7 +238,9 @@
                         <%= ben.health_status || '-' %>
                       </td>
                       <td>
-                        <%= ben.job_type_name || '-' %>
+                        <% const benOccIds = String(ben.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
+                           const benOccNames = benOccIds.map(id => { const jt = jobTypes.find(j => String(j.id) === id); return jt ? jt.job_type_name : id; });
+                        %><%= benOccNames.length ? benOccNames.join(', ') : '-' %>
                       </td>
                       </td>
                       <td>
