@@ -386,6 +386,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/beneficiary-validate.js"></script>
     <script>
         // --- Occupation checkbox dropdown ---
         function toggleOccupationDropdown() {
@@ -424,104 +425,33 @@
         });
         let uploadedPhotoData = null;
         
-        // Form validation before submission
+        // Gate form submission behind shared validation (beneficiary-validate.js).
+        // e.preventDefault() stops the native submit; this.submit() bypasses
+        // event listeners so it won't re-trigger this handler.
         document.getElementById('beneficiaryForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const requiredFields = [
-                { id: 'photoInput', label: 'Photo', type: 'file' },
-                { id: 'beneficiary_name', label: 'Beneficiary Name' },
-                { id: 'guardian_name', label: 'Name of Father/Mother/Husband' },
-                { id: 'age', label: 'Age' },
-                { id: 'gender', label: 'Gender' },
-                { id: 'education', label: 'Education' },
-                { id: 'marital_status', label: 'Marital Status' },
-                { id: 'children_count', label: 'No. of Children' },
-                { id: 'id_mark', label: 'Identification Mark' },
-                { id: 'location', label: 'Location / Whereabouts' },
-                { id: 'native_place', label: 'Native Place Address' },
-                { id: 'health_status', label: 'Health Status' },
-                { id: 'habits', label: 'Habits' },
-                { id: 'occupation_id', label: 'Occupation', type: 'occupation' },
-                { id: 'occupation_place', label: 'Place of Occupation' },
-                { id: 'reference_name', label: 'Reference Person Name' },
-                { id: 'reference_address', label: 'Reference Address' },
-                { id: 'contact_no', label: 'Contact Number' },
-                { id: 'reason_ulb', label: 'Reason for ULB Stay' },
-                { id: 'stay_type', label: 'Stay Type' },
-                { id: 'remarks', label: 'Remarks / Special Attention' },
-            ];
-            
-            let isValid = true;
-            let firstInvalidField = null;
-            
-            // Clear all previous error messages
-            document.querySelectorAll('.error-message').forEach(msg => {
-                msg.classList.remove('show');
-            });
-            
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field.id);
-                const errorMsg = document.getElementById(`${field.id}-error`);
-                
-                let fieldInvalid = false;
-                
-                if (field.type === 'file') {
-                    if (!element.files || element.files.length === 0) {
-                        fieldInvalid = true;
-                    }
-                } else if (field.type === 'occupation') {
-                    if (!element.value || element.value.trim() === '') {
-                        fieldInvalid = true;
-                    }
-                } else {
-                    if (!element.value || element.value.trim() === '') {
-                        fieldInvalid = true;
-                    }
-                }
 
-                if (fieldInvalid) {
-                    isValid = false;
-                    if (field.type === 'occupation') {
-                        document.getElementById('occupationToggle').classList.add('is-invalid');
-                    } else {
-                        element.classList.add('is-invalid');
-                    }
-                    if (field.id === 'photoInput') {
-                        document.querySelector('.photo-upload-container').classList.add('is-invalid');
-                    }
-                    if (errorMsg) {
-                        errorMsg.classList.add('show');
-                    }
-                    if (!firstInvalidField) {
-                        firstInvalidField = element;
-                    }
-                } else {
-                    if (field.type === 'occupation') {
-                        document.getElementById('occupationToggle').classList.remove('is-invalid');
-                    } else {
-                        element.classList.remove('is-invalid');
-                    }
-                    if (field.id === 'photoInput') {
-                        document.querySelector('.photo-upload-container').classList.remove('is-invalid');
-                    }
-                    if (errorMsg) {
-                        errorMsg.classList.remove('show');
-                    }
-                }
-            });
-            
-            if (!isValid) {
-                // Scroll to first invalid field
-                if (firstInvalidField) {
-                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    setTimeout(() => firstInvalidField.focus(), 500);
-                }
-                return false;
-            }
-            
-            // If validation passes, submit the form
-            this.submit();
+            const valid = validateBeneficiaryForm([
+                { id: 'photoInput',        type: 'file' },   // photo is mandatory on registration
+                { id: 'beneficiary_name' },
+                { id: 'guardian_name' },
+                { id: 'age' },
+                { id: 'education' },
+                { id: 'id_mark' },
+                { id: 'location' },
+                { id: 'native_place' },
+                { id: 'health_status' },
+                { id: 'habits' },
+                { id: 'occupation_id',     type: 'occupation' }, // highlights occupationToggle wrapper
+                { id: 'occupation_place' },
+                { id: 'reference_name' },
+                { id: 'reference_address' },
+                { id: 'contact_no' },
+                { id: 'reason_ulb' },
+                { id: 'remarks' },
+            ]);
+
+            if (valid) this.submit();
         });
         
         // Real-time validation on input change
@@ -563,278 +493,250 @@
             }
         }
         
+        // Check all required fields before generating the PDF.
+        // The banner is created dynamically (not in the template) so it only
+        // exists in the DOM when there is actually an error, and auto-dismisses
+        // after 4 s via a CSS opacity fade.
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
+            const hasEmpty = ['beneficiary_name','guardian_name','age','education','id_mark',
+                'location','native_place','health_status','habits','occupation_id',
+                'occupation_place','reference_name','reference_address','contact_no','reason_ulb','remarks']
+                .some(id => !document.getElementById(id)?.value?.trim());
+
+            if (hasEmpty) {
+                // Remove any previous banner before inserting a fresh one
+                document.getElementById('pdfErrorBanner')?.remove();
+                const b = Object.assign(document.createElement('div'), {
+                    id: 'pdfErrorBanner',
+                    className: 'alert alert-danger',
+                    innerHTML: '⚠️ Please fill in all required fields before downloading the form.'
+                });
+                b.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;min-width:340px;max-width:580px;box-shadow:0 4px 16px rgba(0,0,0,0.18);border-radius:8px;padding:12px 18px;';
+                document.body.appendChild(b);
+                // Fade out after 4 s, then remove from DOM
+                setTimeout(() => { b.style.transition='opacity 0.4s'; b.style.opacity='0'; setTimeout(()=>b.remove(),400); }, 4000);
+                return;
+            }
 
             // Get selected occupation labels from display span
             const occupationText = document.getElementById('occupationDisplay').textContent.replace('Select occupation(s)', '');
-            
+
             const d = {
                 beneficiary_name: document.getElementById('beneficiary_name').value,
-                guardian_name: document.getElementById('guardian_name').value,
-                age: document.getElementById('age').value,
-                gender: document.getElementById('gender').value,
-                education: document.getElementById('education').value,
-                marital_status: document.getElementById('marital_status').value,
-                children_count: document.getElementById('children_count').value,
-                id_mark: document.getElementById('id_mark').value,
-                location: document.getElementById('location').value,
-                native_place: document.getElementById('native_place').value,
-                health_status: document.getElementById('health_status').value,
-                habits: document.getElementById('habits').value,
-                occupation_id: occupationText,
+                guardian_name:    document.getElementById('guardian_name').value,
+                age:              document.getElementById('age').value,
+                gender:           document.getElementById('gender').value,
+                education:        document.getElementById('education').value,
+                marital_status:   document.getElementById('marital_status').value,
+                children_count:   document.getElementById('children_count').value,
+                id_mark:          document.getElementById('id_mark').value,
+                location:         document.getElementById('location').value,
+                native_place:     document.getElementById('native_place').value,
+                health_status:    document.getElementById('health_status').value,
+                habits:           document.getElementById('habits').value,
+                occupation_id:    occupationText,
                 occupation_place: document.getElementById('occupation_place').value,
-                reference_name: document.getElementById('reference_name').value,
-                reference_address: document.getElementById('reference_address').value,
-                contact_no: document.getElementById('contact_no').value,
-                reason_ulb: document.getElementById('reason_ulb').value,
-                stay_type: document.getElementById('stay_type').value,
-                remarks: document.getElementById('remarks').value,
-                shelter: document.getElementById('shelterName').value,
-                shelterLoc: document.getElementById('shelterLocation').value,
-                ulb: document.getElementById('ulbName').value,
-                agency: document.getElementById('agencyName').value,
-                ward: document.getElementById('wardNo').value,
+                reference_name:   document.getElementById('reference_name').value,
+                reference_address:document.getElementById('reference_address').value,
+                contact_no:       document.getElementById('contact_no').value,
+                reason_ulb:       document.getElementById('reason_ulb').value,
+                stay_type:        document.getElementById('stay_type').value,
+                remarks:          document.getElementById('remarks').value,
+                shelter:          document.getElementById('shelterName').value,
+                shelterLoc:       document.getElementById('shelterLocation').value,
+                ulb:              document.getElementById('ulbName').value,
+                agency:           document.getElementById('agencyName').value,
+                ward:             document.getElementById('wardNo').value,
             };
-            
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const startX = 20;
-            const endX = 190;
-            const fullW = endX - startX;
-            const halfW = (fullW - 5) / 2;
-            let y = 20; 
-            const lineSpacing = 8;
-            const pad = 2;
-            const setLabel = () => { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(0); };
-            const setValue = () => { pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(0); };
-            const setHeader = () => { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.setTextColor(0); };
-            
-            function field(label, value, x, w, multi = false) {
-                setLabel();
-                const labelWidth = pdf.getTextWidth(label) + 2;
-                pdf.text(label, x, y);
-                
-                setValue();
-                pdf.setDrawColor(100);
-                pdf.setLineWidth(0.3);
-                pdf.setLineDash([1, 1]);
-                
-                if (multi) {
-                    const availableWidth = w - labelWidth;
-                    const lines = pdf.splitTextToSize(value || '', availableWidth - 2);
-                    pdf.text(lines[0] || '', x + labelWidth, y);
-                    pdf.line(x + labelWidth, y + 1, x + w, y + 1);
-                    
-                    if (lines.length > 1) {
-                        y += 5;
-                        for (let i = 1; i < lines.length; i++) {
-                            pdf.text(lines[i], x, y);
-                            pdf.line(x, y + 1, x + w, y + 1);
-                            if (i < lines.length - 1) y += 5;
-                        }
-                    }
-                    y += 6;
-                } else {
-                    pdf.text(String(value || ''), x + labelWidth, y);
-                    pdf.line(x + labelWidth, y + 1, x + w, y + 1);
-                    y += lineSpacing;
-                }
-                pdf.setLineDash([]);
-            }
-            
-            pdf.setFontSize(16);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Registration of Homeless Person', startX, y + 5);
-            
-            const photoW = 35;
-            const photoH = 45;
-            const photoX = endX - photoW;
-            pdf.setDrawColor(0);
-            pdf.rect(photoX, y, photoW, photoH);
-            
-            if (uploadedPhotoData) {
-                try {
-                    pdf.addImage(uploadedPhotoData, 'JPEG', photoX + 1, y + 1, photoW - 2, photoH - 2);
-                } catch (e) {
-                    console.error("Image error", e);
-                    pdf.setFontSize(8);
-                    pdf.text('Img Error', photoX + 5, y + 20);
-                }
-            } else {
+
+            const pdf  = new jsPDF('p', 'mm', 'a4');
+            const pageW    = 210;
+            const marginX  = 10;
+            const contentW = pageW - marginX * 2;   // 190 mm
+            const halfX    = marginX + contentW / 2; // 105 mm
+            const halfW    = contentW / 2;
+            const FH       = 8;   // standard field-row height in mm
+            let y = 10;
+
+            // ── helpers ────────────────────────────────────────────────────────
+            // Gray section header bar (dark text)
+            function sectionBar(title) {
+                pdf.setFillColor(210, 210, 215);
+                pdf.rect(marginX, y, contentW, 6.5, 'F');
+                pdf.setDrawColor(160); pdf.setLineWidth(0.2);
+                pdf.line(marginX, y, marginX + contentW, y);
+                pdf.setFont('helvetica', 'bold');
                 pdf.setFontSize(8);
-                pdf.setTextColor(150);
-                pdf.text('Photo', photoX + (photoW/2), y + (photoH/2), { align: 'center' });
+                pdf.setTextColor(40);
+                pdf.text(title, marginX + 3, y + 4.5);
+                pdf.setTextColor(0);
+                y += 6.5;
             }
-            
-            y += 55;
-            field('Name:', d.beneficiary_name, startX, fullW);
-            field('Name of Father/Mother/Husband:', d.guardian_name, startX, fullW);
-            
-            // Age and Gender on same line
-            let tempY = y;
-            setLabel();
-            const ageLabel = 'Age:';
-            const ageLabelWidth = pdf.getTextWidth(ageLabel) + 2;
-            pdf.text(ageLabel, startX, y);
-            setValue();
-            pdf.text(String(d.age || ''), startX + ageLabelWidth, y);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX + ageLabelWidth, y + 1, startX + halfW, y + 1);
-            
-            setLabel();
-            const genderLabel = 'Gender:';
-            const genderLabelWidth = pdf.getTextWidth(genderLabel) + 2;
-            pdf.text(genderLabel, startX + halfW + 5, tempY);
-            setValue();
-            pdf.text(String(d.gender || ''), startX + halfW + 5 + genderLabelWidth, tempY);
-            pdf.line(startX + halfW + 5 + genderLabelWidth, tempY + 1, endX, tempY + 1);
-            pdf.setLineDash([]);
-            y += lineSpacing;
-            
-            // Qualification full width
-            field('Qualification:', d.education, startX, fullW);
-            
-            // Marital Status and No of Children on same line
-            tempY = y;
-            setLabel();
-            const maritalLabel = 'Marital Status:';
-            const maritalLabelWidth = pdf.getTextWidth(maritalLabel) + 2;
-            pdf.text(maritalLabel, startX, y);
-            setValue();
-            pdf.text(String(d.marital_status || ''), startX + maritalLabelWidth, y);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX + maritalLabelWidth, y + 1, startX + halfW, y + 1);
-            
-            setLabel();
-            const childLabel = 'No of Children:';
-            const childLabelWidth = pdf.getTextWidth(childLabel) + 2;
-            pdf.text(childLabel, startX + halfW + 5, tempY);
-            setValue();
-            pdf.text(String(d.children_count || ''), startX + halfW + 5 + childLabelWidth, tempY);
-            pdf.line(startX + halfW + 5 + childLabelWidth, tempY + 1, endX, tempY + 1);
-            pdf.setLineDash([]);
-            y += lineSpacing;
-            
-            // Personal Identification Mark full width
-            field('Personal Identification Mark:', d.id_mark, startX, fullW);
-            
-            field('Location/Whereabouts:', d.location, startX, fullW, true);
-            field('Native Place Address:', d.native_place, startX, fullW, true);
-            field('Occupation/Activity:', d.occupation_id, startX, fullW, true);
-            field('Place of Occupation/Activity:', d.occupation_place, startX, fullW, true);
-            field('Reference Person Name:', d.reference_name, startX, fullW);
-            field('Reference Address:', d.reference_address, startX, fullW);
-            field('Contact Number:', d.contact_no, startX, fullW);
-            
-            tempY = y;
-            setLabel();
-            const healthLabel = 'Health Status:';
-            const healthLabelWidth = pdf.getTextWidth(healthLabel) + 2;
-            pdf.text(healthLabel, startX, y);
-            setValue();
-            pdf.text(String(d.health_status || ''), startX + healthLabelWidth, y);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX + healthLabelWidth, y + 1, startX + halfW, y + 1);
-            
-            setLabel();
-            const habitsLabel = 'Habits:';
-            const habitsLabelWidth = pdf.getTextWidth(habitsLabel) + 2;
-            pdf.text(habitsLabel, startX + halfW + 5, tempY);
-            setValue();
-            pdf.text(String(d.habits || ''), startX + halfW + 5 + habitsLabelWidth, tempY);
-            pdf.line(startX + halfW + 5 + habitsLabelWidth, tempY + 1, endX, tempY + 1);
-            pdf.setLineDash([]);
-            y += lineSpacing;
-            
-            tempY = y;
-            setLabel();
-            const reasonLabel = 'Reason for stay in the ULB:';
-            const reasonLabelWidth = pdf.getTextWidth(reasonLabel) + 2;
-            pdf.text(reasonLabel, startX, y);
-            setValue();
-            pdf.text(String(d.reason_ulb || ''), startX + reasonLabelWidth, y);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX + reasonLabelWidth, y + 1, startX + halfW, y + 1);
-            
-            setLabel();
-            const stayLabel = 'Stay:';
-            const stayLabelWidth = pdf.getTextWidth(stayLabel) + 2;
-            pdf.text(stayLabel, startX + halfW + 5, tempY);
-            setValue();
-            pdf.text(String(d.stay_type || ''), startX + halfW + 5 + stayLabelWidth, tempY);
-            pdf.line(startX + halfW + 5 + stayLabelWidth, tempY + 1, endX, tempY + 1);
-            pdf.setLineDash([]);
-            y += lineSpacing;
-            
-            field('Remarks / Special Attention:', d.remarks, startX, fullW, true);
-            y += 3;
-            
-            // Signatures side by side
-            tempY = y;
-            pdf.setFontSize(9);
+
+            // Single field row: bold small label + 10pt value, light bottom border
+            // opts: { noAdvance, labelColor }
+            function row(label, value, x, w, opts) {
+                opts = opts || {};
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                pdf.setTextColor(opts.labelColor || 70);
+                pdf.text(label, x + 2, y + 5.5);
+                const lw = pdf.getTextWidth(label) + 3;
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(0);
+                const val = String(value || '');
+                // truncate to fit width
+                const maxValW = w - lw - 4;
+                const truncated = pdf.getTextWidth(val) > maxValW
+                    ? pdf.splitTextToSize(val, maxValW)[0]
+                    : val;
+                pdf.text(truncated, x + 2 + lw, y + 5.5);
+                // bottom border
+                pdf.setDrawColor(210); pdf.setLineWidth(0.15);
+                pdf.line(x, y + FH, x + w, y + FH);
+                if (!opts.noAdvance) y += FH;
+            }
+
+            // Two-column row with vertical divider between them
+            function row2(lbl1, val1, lbl2, val2) {
+                const rowY = y;
+                row(lbl1, val1, marginX, halfW, { noAdvance: true });
+                row(lbl2, val2, halfX,   halfW, { noAdvance: true });
+                // vertical divider
+                pdf.setDrawColor(210); pdf.setLineWidth(0.2);
+                pdf.line(halfX, rowY, halfX, rowY + FH);
+                y += FH;
+            }
+
+            // Stacked row: label on line 1, value on line 2 (max 2 value lines)
+            function stackedRow(label, value, x, w) {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                pdf.setTextColor(70);
+                pdf.text(label, x + 2, y + 5.5);
+                pdf.setDrawColor(210); pdf.setLineWidth(0.15);
+                pdf.line(x, y + FH, x + w, y + FH);
+                y += FH;
+
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(0);
+                const lines = pdf.splitTextToSize(String(value || ''), w - 4);
+                const usedLines = lines.slice(0, 4);
+                usedLines.forEach(ln => {
+                    pdf.text(ln, x + 2, y + 5.5);
+                    pdf.setDrawColor(210); pdf.setLineWidth(0.15);
+                    pdf.line(x, y + FH, x + w, y + FH);
+                    y += FH;
+                });
+                if (usedLines.length === 0) {
+                    pdf.line(x, y + FH, x + w, y + FH);
+                    y += FH;
+                }
+            }
+
+            // ── TITLE ──────────────────────────────────────────────────────────
+            pdf.setFillColor(28, 38, 75);
+            pdf.rect(marginX, y, contentW, 11, 'F');
             pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(13);
+            pdf.setTextColor(255, 255, 255);
+            pdf.text('Registration of Beneficiary', pageW / 2, y + 7.5, { align: 'center' });
             pdf.setTextColor(0);
-            pdf.text('Signature / Thumb Impression', startX, tempY);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX, tempY + 3, startX + 80, tempY + 3);
-            
-            pdf.text('Signature of the surveyor', startX + 90, tempY);
-            pdf.line(startX + 90, tempY + 3, endX, tempY + 3);
-            pdf.setLineDash([]);
-            y += 10;
-            
-            pdf.setDrawColor(50);
-            pdf.setLineWidth(0.5);
-            pdf.line(startX, y, endX, y);
-            y += 5;
-            
-            setHeader();
-            pdf.text('Office Use', startX, y);
-            y += 5;
-            
-            tempY = y;
-            setLabel();
-            const shelterLabel = 'Name of the Shelter:';
-            const shelterLabelWidth = pdf.getTextWidth(shelterLabel) + 2;
-            pdf.text(shelterLabel, startX, y);
-            setValue();
-            pdf.text(String(d.shelter || ''), startX + shelterLabelWidth, y);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX + shelterLabelWidth, y + 1, startX + halfW, y + 1);
-            
-            setLabel();
-            const locLabel = 'Location:';
-            const locLabelWidth = pdf.getTextWidth(locLabel) + 2;
-            pdf.text(locLabel, startX + halfW + 5, tempY);
-            setValue();
-            pdf.text(String(d.shelterLoc || ''), startX + halfW + 5 + locLabelWidth, tempY);
-            pdf.line(startX + halfW + 5 + locLabelWidth, tempY + 1, endX, tempY + 1);
-            pdf.setLineDash([]);
-            y += lineSpacing + 1;
-            
-            tempY = y;
-            setLabel();
-            const ulbLabel = 'Name of the ULB:';
-            const ulbLabelWidth = pdf.getTextWidth(ulbLabel) + 2;
-            pdf.text(ulbLabel, startX, y);
-            setValue();
-            pdf.text(String(d.ulb || ''), startX + ulbLabelWidth, y);
-            pdf.setLineDash([1, 1]);
-            pdf.line(startX + ulbLabelWidth, y + 1, startX + halfW, y + 1);
-            
-            setLabel();
-            const wardLabel = 'Ward No:';
-            const wardLabelWidth = pdf.getTextWidth(wardLabel) + 2;
-            pdf.text(wardLabel, startX + halfW + 5, tempY);
-            setValue();
-            pdf.text(String(d.ward || ''), startX + halfW + 5 + wardLabelWidth, tempY);
-            pdf.line(startX + halfW + 5 + wardLabelWidth, tempY + 1, endX, tempY + 1);
-            pdf.setLineDash([]);
-            y += lineSpacing + 1;
-            
-            field('Shelter Management Agency Name:', d.agency, startX, fullW);
-            
-            pdf.save('beneficiary_form_with_photo.pdf');
+            y += 11;
+
+            // ── PHOTO + FIRST FIELDS ───────────────────────────────────────────
+            const photoW  = 28;
+            const photoH  = 4 * FH; // matches 4 field rows
+            const photoX  = marginX + contentW - photoW;
+            const nameW   = contentW - photoW; // field area width beside photo
+
+            // Photo box
+            pdf.setDrawColor(100); pdf.setLineWidth(0.4);
+            pdf.rect(photoX, y, photoW, photoH);
+            if (uploadedPhotoData) {
+                try { pdf.addImage(uploadedPhotoData, 'JPEG', photoX + 1, y + 1, photoW - 2, photoH - 2); }
+                catch (e) { /* skip */ }
+            } else {
+                pdf.setFontSize(7); pdf.setTextColor(150);
+                pdf.text('PHOTO', photoX + photoW / 2, y + photoH / 2 + 1, { align: 'center' });
+                pdf.setTextColor(0);
+            }
+
+            // Vertical separator left of photo
+            pdf.setDrawColor(200); pdf.setLineWidth(0.2);
+            pdf.line(photoX, y, photoX, y + photoH);
+
+            // 4 field rows beside the photo
+            row('Name:',                      d.beneficiary_name, marginX, nameW);
+            row('Father / Mother / Husband:', d.guardian_name,    marginX, nameW);
+
+            // Age + Gender split within the name-block width
+            const halfNameX = marginX + nameW / 2;
+            const halfNameW = nameW / 2;
+            const rowY = y;
+            row('Age:',    d.age,    marginX,   halfNameW, { noAdvance: true });
+            row('Gender:', d.gender, halfNameX, halfNameW, { noAdvance: true });
+            pdf.setDrawColor(210); pdf.setLineWidth(0.2);
+            pdf.line(halfNameX, rowY, halfNameX, rowY + FH);
+            y += FH;
+
+            row('Qualification:', d.education, marginX, nameW);
+
+            // ── PERSONAL INFORMATION ───────────────────────────────────────────
+            sectionBar('PERSONAL INFORMATION');
+
+            row2('Marital Status:', d.marital_status, 'No. of Children:', d.children_count);
+            row('Personal Identification Mark:', d.id_mark, marginX, contentW);
+
+            // ── LOCATION & EMPLOYMENT ──────────────────────────────────────────
+            sectionBar('LOCATION & EMPLOYMENT');
+
+            stackedRow('Location / Whereabouts:',        d.location,         marginX, contentW);
+            stackedRow('Native Place Address:',          d.native_place,      marginX, contentW);
+            stackedRow('Occupation / Activity:',         d.occupation_id,     marginX, contentW);
+            row(        'Place of Occupation / Activity:', d.occupation_place,  marginX, contentW);
+
+            // ── CONTACT & REFERENCES ───────────────────────────────────────────
+            sectionBar('CONTACT & REFERENCES');
+
+            row('Reference Person Name:', d.reference_name,    marginX, contentW);
+            row('Reference Address:',     d.reference_address, marginX, contentW);
+            row('Contact Number:',        d.contact_no,        marginX, contentW);
+
+            // ── HEALTH & STAY ──────────────────────────────────────────────────
+            sectionBar('HEALTH & STAY');
+
+            row2('Health Status:', d.health_status, 'Habits:', d.habits);
+            row2('Reason for Stay in the ULB:', d.reason_ulb, 'Stay Type:', d.stay_type);
+            stackedRow('Remarks / Special Attention:', d.remarks, marginX, contentW);
+
+            // ── SIGNATURES ────────────────────────────────────────────────────
+            pdf.setFillColor(248, 248, 248);
+            pdf.rect(marginX, y, contentW, 14, 'F');
+            pdf.setDrawColor(200); pdf.setLineWidth(0.2);
+            pdf.line(halfX, y, halfX, y + 14);
+            pdf.line(marginX, y + 14, marginX + contentW, y + 14);
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(60);
+            pdf.text('Signature / Thumb Impression',  marginX + 3,  y + 9);
+            pdf.text('Signature of the Surveyor',     halfX + 3,    y + 9);
+            pdf.setTextColor(0);
+            y += 14;
+
+            // ── OFFICE USE ONLY ────────────────────────────────────────────────
+            sectionBar('OFFICE USE ONLY');
+
+            row2('Name of the Shelter:',  d.shelter,    'Location:',  d.shelterLoc);
+            row2('Name of the ULB:',      d.ulb,        'Ward No:',   d.ward);
+            row('Shelter Management Agency Name:', d.agency, marginX, contentW);
+
+            // Outer border (drawn last so it sits on top)
+            pdf.setDrawColor(0); pdf.setLineWidth(0.5);
+            pdf.rect(marginX, 10, contentW, y - 10);
+
+            pdf.save('beneficiary_form.pdf');
         }
     </script>
 </body>
