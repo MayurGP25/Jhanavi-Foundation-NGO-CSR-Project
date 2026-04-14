@@ -386,6 +386,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/beneficiary-validate.js"></script>
     <script>
         // --- Occupation checkbox dropdown ---
         function toggleOccupationDropdown() {
@@ -424,104 +425,33 @@
         });
         let uploadedPhotoData = null;
         
-        // Form validation before submission
+        // Gate form submission behind shared validation (beneficiary-validate.js).
+        // e.preventDefault() stops the native submit; this.submit() bypasses
+        // event listeners so it won't re-trigger this handler.
         document.getElementById('beneficiaryForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const requiredFields = [
-                { id: 'photoInput', label: 'Photo', type: 'file' },
-                { id: 'beneficiary_name', label: 'Beneficiary Name' },
-                { id: 'guardian_name', label: 'Name of Father/Mother/Husband' },
-                { id: 'age', label: 'Age' },
-                { id: 'gender', label: 'Gender' },
-                { id: 'education', label: 'Education' },
-                { id: 'marital_status', label: 'Marital Status' },
-                { id: 'children_count', label: 'No. of Children' },
-                { id: 'id_mark', label: 'Identification Mark' },
-                { id: 'location', label: 'Location / Whereabouts' },
-                { id: 'native_place', label: 'Native Place Address' },
-                { id: 'health_status', label: 'Health Status' },
-                { id: 'habits', label: 'Habits' },
-                { id: 'occupation_id', label: 'Occupation', type: 'occupation' },
-                { id: 'occupation_place', label: 'Place of Occupation' },
-                { id: 'reference_name', label: 'Reference Person Name' },
-                { id: 'reference_address', label: 'Reference Address' },
-                { id: 'contact_no', label: 'Contact Number' },
-                { id: 'reason_ulb', label: 'Reason for ULB Stay' },
-                { id: 'stay_type', label: 'Stay Type' },
-                { id: 'remarks', label: 'Remarks / Special Attention' },
-            ];
-            
-            let isValid = true;
-            let firstInvalidField = null;
-            
-            // Clear all previous error messages
-            document.querySelectorAll('.error-message').forEach(msg => {
-                msg.classList.remove('show');
-            });
-            
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field.id);
-                const errorMsg = document.getElementById(`${field.id}-error`);
-                
-                let fieldInvalid = false;
-                
-                if (field.type === 'file') {
-                    if (!element.files || element.files.length === 0) {
-                        fieldInvalid = true;
-                    }
-                } else if (field.type === 'occupation') {
-                    if (!element.value || element.value.trim() === '') {
-                        fieldInvalid = true;
-                    }
-                } else {
-                    if (!element.value || element.value.trim() === '') {
-                        fieldInvalid = true;
-                    }
-                }
 
-                if (fieldInvalid) {
-                    isValid = false;
-                    if (field.type === 'occupation') {
-                        document.getElementById('occupationToggle').classList.add('is-invalid');
-                    } else {
-                        element.classList.add('is-invalid');
-                    }
-                    if (field.id === 'photoInput') {
-                        document.querySelector('.photo-upload-container').classList.add('is-invalid');
-                    }
-                    if (errorMsg) {
-                        errorMsg.classList.add('show');
-                    }
-                    if (!firstInvalidField) {
-                        firstInvalidField = element;
-                    }
-                } else {
-                    if (field.type === 'occupation') {
-                        document.getElementById('occupationToggle').classList.remove('is-invalid');
-                    } else {
-                        element.classList.remove('is-invalid');
-                    }
-                    if (field.id === 'photoInput') {
-                        document.querySelector('.photo-upload-container').classList.remove('is-invalid');
-                    }
-                    if (errorMsg) {
-                        errorMsg.classList.remove('show');
-                    }
-                }
-            });
-            
-            if (!isValid) {
-                // Scroll to first invalid field
-                if (firstInvalidField) {
-                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    setTimeout(() => firstInvalidField.focus(), 500);
-                }
-                return false;
-            }
-            
-            // If validation passes, submit the form
-            this.submit();
+            const valid = validateBeneficiaryForm([
+                { id: 'photoInput',        type: 'file' },   // photo is mandatory on registration
+                { id: 'beneficiary_name' },
+                { id: 'guardian_name' },
+                { id: 'age' },
+                { id: 'education' },
+                { id: 'id_mark' },
+                { id: 'location' },
+                { id: 'native_place' },
+                { id: 'health_status' },
+                { id: 'habits' },
+                { id: 'occupation_id',     type: 'occupation' }, // highlights occupationToggle wrapper
+                { id: 'occupation_place' },
+                { id: 'reference_name' },
+                { id: 'reference_address' },
+                { id: 'contact_no' },
+                { id: 'reason_ulb' },
+                { id: 'remarks' },
+            ]);
+
+            if (valid) this.submit();
         });
         
         // Real-time validation on input change
@@ -563,13 +493,19 @@
             }
         }
         
+        // Check all required fields before generating the PDF.
+        // The banner is created dynamically (not in the template) so it only
+        // exists in the DOM when there is actually an error, and auto-dismisses
+        // after 4 s via a CSS opacity fade.
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
+            const hasEmpty = ['beneficiary_name','guardian_name','age','education','id_mark',
                 'location','native_place','health_status','habits','occupation_id',
                 'occupation_place','reference_name','reference_address','contact_no','reason_ulb','remarks']
                 .some(id => !document.getElementById(id)?.value?.trim());
 
             if (hasEmpty) {
+                // Remove any previous banner before inserting a fresh one
                 document.getElementById('pdfErrorBanner')?.remove();
                 const b = Object.assign(document.createElement('div'), {
                     id: 'pdfErrorBanner',
@@ -578,6 +514,7 @@
                 });
                 b.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;min-width:340px;max-width:580px;box-shadow:0 4px 16px rgba(0,0,0,0.18);border-radius:8px;padding:12px 18px;';
                 document.body.appendChild(b);
+                // Fade out after 4 s, then remove from DOM
                 setTimeout(() => { b.style.transition='opacity 0.4s'; b.style.opacity='0'; setTimeout(()=>b.remove(),400); }, 4000);
                 return;
             }

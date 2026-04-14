@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
@@ -30,6 +31,8 @@ app.set("views", path.join(__dirname, "views"));
 
 // Migrate occupation_id column to VARCHAR to support multiple selections
 (async () => {
+    // occupation_id was originally INT; changed to VARCHAR(100) so that
+    // multiple occupation IDs can be stored as a comma-separated string.
     try {
         await db.query(
             "ALTER TABLE beneficiaries MODIFY COLUMN occupation_id VARCHAR(100)"
@@ -42,7 +45,18 @@ app.set("views", path.join(__dirname, "views"));
             "ALTER TABLE beneficiaries ADD COLUMN native_place VARCHAR(255)"
         );
     } catch (err) {
-        // Ignore if column already exists
+        //Ignore if already VARCHAR or column does not exist
+    }
+
+    // marital_status was originally an ENUM('Single','Married').  Converting
+    // to VARCHAR(20) allows all four values — Unmarried, Married, Divorced,
+    // Widowed — without needing to extend the ENUM definition.
+    try {
+        await db.query(
+            "ALTER TABLE beneficiaries MODIFY COLUMN marital_status VARCHAR(20)"
+        );
+    } catch (err) {
+        // Silently skip — column is already VARCHAR or does not exist
     }
 })();
 
