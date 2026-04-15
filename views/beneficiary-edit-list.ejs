@@ -206,99 +206,32 @@
               <tr>
                 <th style="width:50px;">#</th>
                 <th>Beneficiary Name</th>
-                <th>Guardian Name</th>
                 <th style="width:60px;">Age</th>
                 <th style="width:90px;">Gender</th>
-                <th>Education</th>
-                <th style="width:110px;">Marital Status</th>
-                <th style="width:80px;">Children</th>
-                <th>Location</th>
-                <th>Health Status</th>
-                <th>Occupation</th>
-                <th style="width:120px;">Contact No</th>
-                <th>Reference</th>
                 <th style="width:120px;">Employment Status</th>
-                <th style="width:100px;">Stay Type</th>
-                <th>Remarks</th>
-                <th class="text-end" style="width:170px;">Actions</th>
+                <th>Location</th>
+                <th style="width:110px;">Stay Type</th>
+                <th class="text-end" style="width:210px;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <% if (beneficiaries.length===0) { %>
                 <tr>
-                  <td colspan="17" class="text-center py-5 text-muted">No records found.</td>
+                  <td colspan="8" class="text-center py-5 text-muted">No records found.</td>
                 </tr>
                 <% } %>
 
                   <% beneficiaries.forEach((ben, index)=> { %>
                     <tr>
-                      <td>
-                        <%= index + 1 %>
-                      </td>
-                      <td class="fw-semibold">
-                        <%= ben.beneficiary_name %>
-                      </td>
-                      <td>
-                        <%= ben.guardian_name || '-' %>
-                      </td>
-                      <td>
-                        <%= (ben.age===null || typeof ben.age==='undefined' ) ? '-' : ben.age %>
-                      </td>
-                      <td>
-                        <%= ben.gender || '-' %>
-                      </td>
-                      <td>
-                        <%= ben.education || '-' %>
-                      </td>
-                      <td>
-                        <%= ben.marital_status || '-' %>
-                      </td>
-                      <td>
-                        <%= (ben.children_count===null || typeof ben.children_count==='undefined' ) ? '-' :
-                          ben.children_count %>
-                      </td>
-                      <td>
-                        <%= ben.location || '-' %>
-                      </td>
-                      <td>
-                        <%= ben.health_status || '-' %>
-                      </td>
-                      <td>
-                        <% const benOccIds = String(ben.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
-                           const benOccNames = benOccIds.map(id => { const jt = jobTypes.find(j => String(j.id) === id); return jt ? jt.job_type_name : id; });
-                        %><%= benOccNames.length ? benOccNames.join(', ') : '-' %>
-                      </td>
-                      <td>
-                        <%= ben.contact_no || '-' %>
-                      </td>
-                      <td>
-                        <% if (ben.reference_name || ben.reference_address) { %>
-                          <div class="small">
-                            <% if (ben.reference_name) { %>
-                              <div>
-                                <%= ben.reference_name %>
-                              </div>
-                              <% } %>
-                                <% if (ben.reference_address) { %>
-                                  <div class="text-muted">
-                                    <%= ben.reference_address %>
-                                  </div>
-                                  <% } %>
-                          </div>
-                          <% } else { %>
-                            -
-                            <% } %>
-                      </td>
-                      <td>
-                        <%= ben.employment_status || 'Unemployed' %>
-                      </td>
-                      <td>
-                        <%= ben.stay_type || '-' %>
-                      </td>
-                      <td>
-                        <%= ben.remarks || '-' %>
-                      </td>
+                      <td><%= index + 1 %></td>
+                      <td class="fw-semibold"><%= ben.beneficiary_name %></td>
+                      <td><%= (ben.age===null || typeof ben.age==='undefined') ? '-' : ben.age %></td>
+                      <td><%= ben.gender || '-' %></td>
+                      <td><%= ben.employment_status || 'Unemployed' %></td>
+                      <td><%= ben.location || '-' %></td>
+                      <td><%= ben.stay_type || '-' %></td>
                       <td class="text-end">
+                        <a href="/beneficiaries/detail/<%= ben.id %>" class="btn btn-sm btn-primary btn-pill">View</a>
                         <a href="/beneficiaries/edit/<%= ben.id %>" class="btn btn-sm btn-warning btn-pill">Edit</a>
                         <form method="POST" action="/beneficiaries/delete/<%= ben.id %>" style="display:inline;"
                           onsubmit="return confirm('Are you sure you want to delete this beneficiary?');">

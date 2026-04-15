@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Beneficiary</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #e3f2fd, #f5f7fb);
+            min-height: 100vh;
+        }
+        .app-header {
+            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.92);
+        }
+        .surface {
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+        }
+        .btn-pill {
+            border-radius: 999px;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 0.02em;
+            color: #0f172a;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+        }
+        .form-control, .form-select, textarea {
+            border-radius: 12px;
+        }
+        textarea {
+            min-height: 110px;
+        }
+        .photo-frame {
+            width: 140px;
+            height: 180px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid #dee2e6;
+            background: #fafafa;
+        }
+        .photo-placeholder {
+            width: 140px;
+            height: 180px;
+            border-radius: 12px;
+            background: #fafafa;
+            border: 2px dashed #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            font-size: 9pt;
+            text-align: center;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark app-header shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-semibold" href="/dashboard">NGO Digital Dashboard</a>
+            <div class="d-flex gap-2">
+                <a href="/beneficiaries/view" class="btn btn-outline-light btn-sm btn-pill">Back</a>
+                <a href="/logout" class="btn btn-outline-light btn-sm btn-pill">Sign Out</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <h1 class="fw-bold mb-1" style="color: #000;">View Beneficiary</h1>
+                <p class="text-muted mb-0">Beneficiary information (read-only)</p>
+            </div>
+        </div>
+
+        <div class="card surface">
+            <div class="card-body p-4 p-md-5">
+
+                <div class="section-title">Personal Information</div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-9">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Name (Beneficiary Name)</label>
+                                <input type="text" class="form-control" value="<%= beneficiary.beneficiary_name %>" disabled>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Name of Father/Mother/Husband</label>
+                                <input type="text" class="form-control" value="<%= beneficiary.guardian_name || '' %>" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <label class="form-label fw-semibold">Photo</label>
+                        <% if (beneficiary.photo && beneficiary.photo.length > 0) { %>
+                            <img class="photo-frame d-block" src="data:image/jpeg;base64,<%= beneficiary.photo.toString('base64') %>" alt="Photo of <%= beneficiary.beneficiary_name %>">
+                        <% } else { %>
+                            <div class="photo-placeholder">No photo available</div>
+                        <% } %>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-semibold">Age</label>
+                        <input type="text" class="form-control" value="<%= (beneficiary.age === null || typeof beneficiary.age === 'undefined') ? '' : beneficiary.age %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-semibold">Gender</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.gender || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Education</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.education || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">Marital Status</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.marital_status || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">No. of Children</label>
+                        <input type="text" class="form-control" value="<%= (beneficiary.children_count === null || typeof beneficiary.children_count === 'undefined') ? '' : beneficiary.children_count %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">Identification Mark</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.id_mark || '' %>" disabled>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Location / Whereabouts</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.location || '' %>" disabled>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Native Place Address</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.native_place || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Health Status</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.health_status || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Habits</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.habits || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Occupation</label>
+                        <%
+                            const occIds = String(beneficiary.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
+                            const occNames = occIds.map(id => { const jt = jobTypes.find(j => String(j.id) === id); return jt ? jt.job_type_name : id; });
+                        %>
+                        <input type="text" class="form-control" value="<%= occNames.length ? occNames.join(', ') : '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Place of Occupation</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.occupation_place || '' %>" disabled>
+                    </div>
+                </div>
+
+                <div class="section-title">Reference Person Details</div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Reference Person Name</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.reference_name || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Reference Address</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.reference_address || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Contact Number</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.contact_no || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Reason for ULB Stay</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.reason_ulb || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Stay Type</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.stay_type || '' %>" disabled>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Remarks / Special Attention</label>
+                        <textarea class="form-control" rows="3" disabled><%= beneficiary.remarks || '' %></textarea>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">Employment Status</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.employment_status || 'Unemployed' %>" disabled>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-4">
+                    <a href="/beneficiaries/view" class="btn btn-outline-secondary btn-pill">Back to List</a>
+                    <a href="/beneficiaries/edit/<%= beneficiary.id %>" class="btn btn-warning btn-pill">Edit Beneficiary</a>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
