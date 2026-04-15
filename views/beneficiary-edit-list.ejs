@@ -41,6 +41,15 @@
     .table-hover tbody tr:hover {
       background: #f2f5ff;
     }
+
+    .soft-badge {
+      border-radius: 999px;
+      padding: .25rem .7rem;
+      font-size: .8rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(255, 255, 255, 0.65);
+      color: #0f172a;
+    }
   </style>
 </head>
 
@@ -132,8 +141,11 @@
             <!-- Stay Type Filter -->
             <div class="col-12 col-md-6 col-lg-4">
               <label class="form-label small fw-semibold">Stay Type</label>
-              <input type="text" name="stay_type" class="form-control" placeholder="Filter by stay type…"
-                style="border-radius:12px;" value="<%= filters && filters.stay_type ? filters.stay_type : '' %>" />
+              <select name="stay_type" class="form-select" style="border-radius:12px;">
+                <option value="">All Stay Types</option>
+                <option value="Permanent" <%=filters && filters.stay_type==='Permanent' ? 'selected' : '' %>>Permanent</option>
+                <option value="Temporary" <%=filters && filters.stay_type==='Temporary' ? 'selected' : '' %>>Temporary</option>
+              </select>
             </div>
 
             <!-- Age Range -->
@@ -169,6 +181,20 @@
             </div>
           </div>
         </form>
+
+        <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
+          <div class="text-muted small">
+            Tip: Use multiple filters to narrow down results.
+          </div>
+          <% const hasFilters = searchQuery || (filters && (filters.gender || filters.marital_status || filters.education || filters.location || filters.health_status || filters.stay_type || filters.min_age || filters.max_age || filters.employment_status)); %>
+          <% if (hasFilters) { %>
+          <div class="soft-badge">
+            Results: <span class="fw-semibold">
+              <%= beneficiaries ? beneficiaries.length : 0 %>
+            </span>
+          </div>
+          <% } %>
+        </div>
       </div>
     </div>
 
@@ -241,7 +267,6 @@
                         <% const benOccIds = String(ben.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
                            const benOccNames = benOccIds.map(id => { const jt = jobTypes.find(j => String(j.id) === id); return jt ? jt.job_type_name : id; });
                         %><%= benOccNames.length ? benOccNames.join(', ') : '-' %>
-                      </td>
                       </td>
                       <td>
                         <%= ben.contact_no || '-' %>

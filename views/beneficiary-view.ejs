@@ -170,8 +170,11 @@
             <!-- Stay Type Filter -->
             <div class="col-12 col-md-6 col-lg-4">
               <label class="form-label small fw-semibold">Stay Type</label>
-              <input type="text" name="stay_type" class="form-control search-input" placeholder="Filter by stay type…"
-                value="<%= filters && filters.stay_type ? filters.stay_type : '' %>" />
+              <select name="stay_type" class="form-select search-input">
+                <option value="">All Stay Types</option>
+                <option value="Permanent" <%=filters && filters.stay_type==='Permanent' ? 'selected' : '' %>>Permanent</option>
+                <option value="Temporary" <%=filters && filters.stay_type==='Temporary' ? 'selected' : '' %>>Temporary</option>
+              </select>
             </div>
 
             <!-- Age Range -->
@@ -212,11 +215,14 @@
           <div class="text-muted small">
             Tip: Use multiple filters to narrow down results.
           </div>
+          <% const hasFilters = searchQuery || (filters && (filters.gender || filters.marital_status || filters.education || filters.location || filters.health_status || filters.stay_type || filters.min_age || filters.max_age || filters.employment_status)); %>
+          <% if (hasFilters) { %>
           <div class="soft-badge">
             Results: <span class="fw-semibold">
               <%= beneficiaries ? beneficiaries.length : 0 %>
             </span>
           </div>
+          <% } %>
         </div>
       </div>
     </div>
@@ -289,7 +295,6 @@
                         <% const bOccIds = String(b.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
                            const bOccNames = bOccIds.map(id => { const jt = jobTypes.find(j => String(j.id) === id); return jt ? jt.job_type_name : id; });
                         %><%= bOccNames.length ? bOccNames.join(', ') : '-' %>
-                      </td>
                       </td>
                       <td>
                         <%= b.contact_no || '-' %>

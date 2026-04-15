@@ -67,7 +67,7 @@ exports.addBeneficiary = async (req, res) => {
 
             [beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
              location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
-             contact_no, reason_ulb, stay_type, remarks, photo, 'unemployed']
+             contact_no, reason_ulb, stay_type, remarks, photo, 'Unemployed']
         );
 
         res.redirect("/beneficiaries/menu");
@@ -128,8 +128,8 @@ let sql = `
             params.push(`%${health_status}%`);
         }
         if (stay_type) {
-            conditions.push("stay_type LIKE ?");
-            params.push(`%${stay_type}%`);
+            conditions.push("stay_type = ?");
+            params.push(stay_type);
         }
         if (min_age) {
             conditions.push("age >= ?");
@@ -138,6 +138,13 @@ let sql = `
         if (max_age) {
             conditions.push("age <= ?");
             params.push(max_age);
+        }
+        if (employment_status === 'Unemployed') {
+            conditions.push("(employment_status = ? OR employment_status IS NULL)");
+            params.push(employment_status);
+        } else if (employment_status) {
+            conditions.push("employment_status = ?");
+            params.push(employment_status);
         }
 
         if (conditions.length > 0) {
@@ -236,8 +243,8 @@ let sql = `
             params.push(`%${health_status}%`);
         }
         if (stay_type) {
-            conditions.push("stay_type LIKE ?");
-            params.push(`%${stay_type}%`);
+            conditions.push("stay_type = ?");
+            params.push(stay_type);
         }
         if (min_age) {
             conditions.push("age >= ?");
@@ -246,6 +253,13 @@ let sql = `
         if (max_age) {
             conditions.push("age <= ?");
             params.push(max_age);
+        }
+        if (employment_status === 'Unemployed') {
+            conditions.push("(employment_status = ? OR employment_status IS NULL)");
+            params.push(employment_status);
+        } else if (employment_status) {
+            conditions.push("employment_status = ?");
+            params.push(employment_status);
         }
 
         if (conditions.length > 0) {
