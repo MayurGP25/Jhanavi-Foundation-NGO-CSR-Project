@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Beneficiary</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/css/styles.css">
     <style>
@@ -68,6 +69,7 @@
         <div class="container">
             <a class="navbar-brand fw-semibold" href="/dashboard">NGO Digital Dashboard</a>
             <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm btn-pill" onclick="downloadPDF()">Download PDF</button>
                 <a href="/beneficiaries/view" class="btn btn-outline-light btn-sm btn-pill">Back</a>
                 <a href="/logout" class="btn btn-outline-light btn-sm btn-pill">Sign Out</a>
             </div>
@@ -203,5 +205,44 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/beneficiary-pdf.js"></script>
+    <script>
+        function downloadPDF() {
+            const occNames = <%- JSON.stringify(occNames) %>;
+            const photoEl = document.querySelector('.photo-frame');
+            const photoSrc = photoEl ? photoEl.src : null;
+
+            generatePDF({
+                data: {
+                    beneficiary_name:  <%- JSON.stringify(beneficiary.beneficiary_name || '') %>,
+                    guardian_name:     <%- JSON.stringify(beneficiary.guardian_name || '') %>,
+                    age:               <%- JSON.stringify(String(beneficiary.age ?? '')) %>,
+                    gender:            <%- JSON.stringify(beneficiary.gender || '') %>,
+                    education:         <%- JSON.stringify(beneficiary.education || '') %>,
+                    marital_status:    <%- JSON.stringify(beneficiary.marital_status || '') %>,
+                    children_count:    <%- JSON.stringify(String(beneficiary.children_count ?? '')) %>,
+                    id_mark:           <%- JSON.stringify(beneficiary.id_mark || '') %>,
+                    location:          <%- JSON.stringify(beneficiary.location || '') %>,
+                    native_place:      <%- JSON.stringify(beneficiary.native_place || '') %>,
+                    health_status:     <%- JSON.stringify(beneficiary.health_status || '') %>,
+                    habits:            <%- JSON.stringify(beneficiary.habits || '') %>,
+                    occupation_id:     occNames.join(', '),
+                    occupation_place:  <%- JSON.stringify(beneficiary.occupation_place || '') %>,
+                    reference_name:    <%- JSON.stringify(beneficiary.reference_name || '') %>,
+                    reference_address: <%- JSON.stringify(beneficiary.reference_address || '') %>,
+                    contact_no:        <%- JSON.stringify(beneficiary.contact_no || '') %>,
+                    reason_ulb:        <%- JSON.stringify(beneficiary.reason_ulb || '') %>,
+                    stay_type:         <%- JSON.stringify(beneficiary.stay_type || '') %>,
+                    remarks:           <%- JSON.stringify(beneficiary.remarks || '') %>,
+                    shelter:    '',
+                    shelterLoc: '',
+                    ulb:        '',
+                    agency:     '',
+                    ward:       '',
+                },
+                photoSrc: photoSrc
+            });
+        }
+    </script>
 </body>
 </html>
