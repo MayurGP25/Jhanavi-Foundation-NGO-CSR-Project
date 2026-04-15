@@ -195,7 +195,7 @@
                             <label class="form-label fw-semibold">Photo</label>
                             <div class="photo-upload-container" onclick="document.getElementById('photoInput').click()">
                                 <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;" onchange="handlePhotoUpload(this)">
-                                <% if (beneficiary.photo) { %>
+                                <% if (beneficiary.photo && beneficiary.photo.length > 0) { %>
                                     <img id="photoPreview" class="photo-preview" src="data:image/jpeg;base64,<%= beneficiary.photo.toString('base64') %>" alt="Beneficiary Photo" style="display: block;">
                                 <% } else { %>
                                     <img id="photoPreview" class="photo-preview" src="" alt="Beneficiary Photo">

@@ -51,8 +51,7 @@ exports.addBeneficiary = async (req, res) => {
         contact_no,
         reason_ulb,
         stay_type,
-        remarks,
-        employment_status // <-- ADD THIS
+        remarks
     } = req.body;
 
     const photo = req.file ? req.file.buffer : null;
@@ -67,7 +66,7 @@ exports.addBeneficiary = async (req, res) => {
 
             [beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
              location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
-             contact_no, reason_ulb, stay_type, remarks, photo, 'unemployed']
+             contact_no, reason_ulb, stay_type, remarks, photo, 'Unemployed']
         );
 
         res.redirect("/beneficiaries/menu");
@@ -94,12 +93,9 @@ exports.viewBeneficiaries = async (req, res) => {
     try {
       // ...existing code...
 let sql = `
-  SELECT b.id, b.beneficiary_name, b.guardian_name, b.age, b.gender, b.education, b.marital_status, b.children_count,
-         b.location, b.health_status, b.occupation_id, b.occupation_place, b.reference_name,
-         b.reference_address, b.contact_no, b.stay_type, b.remarks, b.employment_status, b.photo
+  SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status
   FROM beneficiaries b
 `;
-// ...existing code...
         let params = [];
         let conditions = [];
 
@@ -128,8 +124,8 @@ let sql = `
             params.push(`%${health_status}%`);
         }
         if (stay_type) {
-            conditions.push("stay_type LIKE ?");
-            params.push(`%${stay_type}%`);
+            conditions.push("stay_type = ?");
+            params.push(stay_type);
         }
         if (min_age) {
             conditions.push("age >= ?");
@@ -139,18 +135,23 @@ let sql = `
             conditions.push("age <= ?");
             params.push(max_age);
         }
+        if (employment_status === 'Unemployed') {
+            conditions.push("(employment_status = ? OR employment_status IS NULL)");
+            params.push(employment_status);
+        } else if (employment_status) {
+            conditions.push("employment_status = ?");
+            params.push(employment_status);
+        }
 
         if (conditions.length > 0) {
             sql += " WHERE " + conditions.join(" AND ");
         }
 
         const [rows] = await db.query(sql, params);
-        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
 
         res.render("beneficiary-view", {
             user: req.session.user,
             beneficiaries: rows,
-            jobTypes,
             searchQuery,
             filters: {
                 gender,
@@ -176,7 +177,8 @@ exports.downloadPhoto = async (req, res) => {
         const [rows] = await db.query("SELECT photo, beneficiary_name FROM beneficiaries WHERE id = ?", [id]);
         if (rows.length === 0 || !rows[0].photo) return res.status(404).send("Photo not found");
 
-        res.setHeader('Content-Disposition', `attachment; filename=${rows[0].beneficiary_name}.jpg`);
+        const safeName = encodeURIComponent(rows[0].beneficiary_name.replace(/[^\w\s-]/g, '').trim()) + '.jpg';
+        res.setHeader('Content-Disposition', `attachment; filename="${safeName}"; filename*=UTF-8''${safeName}`);
         res.setHeader('Content-Type', 'image/jpeg');
         res.send(rows[0].photo);
 
@@ -202,12 +204,9 @@ exports.showEditList = async (req, res) => {
     try {
 // ...existing code...
 let sql = `
-  SELECT b.id, b.beneficiary_name, b.guardian_name, b.age, b.gender, b.education, b.marital_status, b.children_count,
-         b.location, b.health_status, b.occupation_id, b.occupation_place, b.reference_name,
-         b.reference_address, b.contact_no, b.stay_type, b.remarks, b.employment_status
+  SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status
   FROM beneficiaries b
 `;
-// ...existing code...
         let params = [];
         let conditions = [];
 
@@ -236,8 +235,8 @@ let sql = `
             params.push(`%${health_status}%`);
         }
         if (stay_type) {
-            conditions.push("stay_type LIKE ?");
-            params.push(`%${stay_type}%`);
+            conditions.push("stay_type = ?");
+            params.push(stay_type);
         }
         if (min_age) {
             conditions.push("age >= ?");
@@ -247,18 +246,23 @@ let sql = `
             conditions.push("age <= ?");
             params.push(max_age);
         }
+        if (employment_status === 'Unemployed') {
+            conditions.push("(employment_status = ? OR employment_status IS NULL)");
+            params.push(employment_status);
+        } else if (employment_status) {
+            conditions.push("employment_status = ?");
+            params.push(employment_status);
+        }
 
         if (conditions.length > 0) {
             sql += " WHERE " + conditions.join(" AND ");
         }
 
         const [rows] = await db.query(sql, params);
-        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
 
         res.render("beneficiary-edit-list", {
             user: req.session.user,
             beneficiaries: rows,
-            jobTypes,
             searchQuery,
             filters: {
                 gender,
@@ -276,6 +280,29 @@ let sql = `
     } catch (err) {
         console.error(err);
         res.send("Error fetching beneficiaries.");
+    }
+};
+
+// --- Show Beneficiary Detail ---
+exports.showBeneficiaryDetail = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
+        const [rows] = await db.query("SELECT * FROM beneficiaries WHERE id = ?", [id]);
+
+        if (rows.length === 0) {
+            return res.status(404).send("Beneficiary not found");
+        }
+
+        res.render("beneficiary-detail", {
+            user: req.session.user,
+            beneficiary: rows[0],
+            jobTypes
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.send("Error loading beneficiary details.");
     }
 };
 

@@ -30,8 +30,9 @@ router.post(
 );
 
 // View all beneficiaries
-router.get("/view", beneficiary.viewBeneficiaries);
-router.get("/photo/:id", beneficiary.downloadPhoto);
+router.get("/view", requireLogin, beneficiary.viewBeneficiaries);
+router.get("/detail/:id", requireLogin, beneficiary.showBeneficiaryDetail);
+router.get("/photo/:id", requireLogin, beneficiary.downloadPhoto);
 
 // =========================
 //  Edit Beneficiary

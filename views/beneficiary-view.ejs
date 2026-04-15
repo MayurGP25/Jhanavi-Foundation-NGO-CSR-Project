@@ -170,8 +170,11 @@
             <!-- Stay Type Filter -->
             <div class="col-12 col-md-6 col-lg-4">
               <label class="form-label small fw-semibold">Stay Type</label>
-              <input type="text" name="stay_type" class="form-control search-input" placeholder="Filter by stay type…"
-                value="<%= filters && filters.stay_type ? filters.stay_type : '' %>" />
+              <select name="stay_type" class="form-select search-input">
+                <option value="">All Stay Types</option>
+                <option value="Permanent" <%=filters && filters.stay_type==='Permanent' ? 'selected' : '' %>>Permanent</option>
+                <option value="Temporary" <%=filters && filters.stay_type==='Temporary' ? 'selected' : '' %>>Temporary</option>
+              </select>
             </div>
 
             <!-- Age Range -->
@@ -212,11 +215,14 @@
           <div class="text-muted small">
             Tip: Use multiple filters to narrow down results.
           </div>
+          <% const hasFilters = searchQuery || (filters && (filters.gender || filters.marital_status || filters.education || filters.location || filters.health_status || filters.stay_type || filters.min_age || filters.max_age || filters.employment_status)); %>
+          <% if (hasFilters) { %>
           <div class="soft-badge">
             Results: <span class="fw-semibold">
               <%= beneficiaries ? beneficiaries.length : 0 %>
             </span>
           </div>
+          <% } %>
         </div>
       </div>
     </div>
@@ -230,96 +236,31 @@
               <tr>
                 <th style="width:50px;">#</th>
                 <th>Beneficiary Name</th>
-                <th>Guardian Name</th>
                 <th style="width:60px;">Age</th>
                 <th style="width:90px;">Gender</th>
-                <th>Education</th>
-                <th style="width:110px;">Marital Status</th>
-                <th style="width:80px;">Children</th>
-                <th>Location</th>
-                <th>Health Status</th>
-                <th>Occupation</th>
-                <th style="width:120px;">Contact No</th>
-                <th>Reference</th>
                 <th style="width:120px;">Employment Status</th>
-                <th style="width:100px;">Stay Type</th>
-                <th>Remarks</th>
+                <th>Location</th>
+                <th style="width:110px;">Stay Type</th>
+                <th style="width:110px;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <% if (!beneficiaries || beneficiaries.length===0) { %>
                 <tr>
-                  <td colspan="16" class="text-center py-5 text-muted">No records found.</td>
+                  <td colspan="8" class="text-center py-5 text-muted">No records found.</td>
                 </tr>
                 <% } else { %>
                   <% beneficiaries.forEach(function(b, index) { %>
                     <tr>
+                      <td><%= index + 1 %></td>
+                      <td class="fw-semibold"><%= b.beneficiary_name %></td>
+                      <td><%= (b.age===null || typeof b.age==='undefined') ? '-' : b.age %></td>
+                      <td><%= b.gender || '-' %></td>
+                      <td><%= b.employment_status || 'Unemployed' %></td>
+                      <td><%= b.location || '-' %></td>
+                      <td><%= b.stay_type || '-' %></td>
                       <td>
-                        <%= index + 1 %>
-                      </td>
-                      <td class="fw-semibold">
-                        <%= b.beneficiary_name %>
-                      </td>
-                      <td>
-                        <%= b.guardian_name || '-' %>
-                      </td>
-                      <td>
-                        <%= (b.age===null || typeof b.age==='undefined' ) ? '-' : b.age %>
-                      </td>
-                      <td>
-                        <%= b.gender || '-' %>
-                      </td>
-                      <td>
-                        <%= b.education || '-' %>
-                      </td>
-                      <td>
-                        <%= b.marital_status || '-' %>
-                      </td>
-                      <td>
-                        <%= (b.children_count===null || typeof b.children_count==='undefined' ) ? '-' : b.children_count
-                          %>
-                      </td>
-                      <td>
-                        <%= b.location || '-' %>
-                      </td>
-                      <td>
-                        <%= b.health_status || '-' %>
-                      </td>
-                      <td>
-                        <% const bOccIds = String(b.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
-                           const bOccNames = bOccIds.map(id => { const jt = jobTypes.find(j => String(j.id) === id); return jt ? jt.job_type_name : id; });
-                        %><%= bOccNames.length ? bOccNames.join(', ') : '-' %>
-                      </td>
-                      </td>
-                      <td>
-                        <%= b.contact_no || '-' %>
-                      </td>
-                      <td>
-                        <% if (b.reference_name || b.reference_address) { %>
-                          <div class="small">
-                            <% if (b.reference_name) { %>
-                              <div>
-                                <%= b.reference_name %>
-                              </div>
-                              <% } %>
-                                <% if (b.reference_address) { %>
-                                  <div class="text-muted">
-                                    <%= b.reference_address %>
-                                  </div>
-                                  <% } %>
-                          </div>
-                          <% } else { %>
-                            -
-                            <% } %>
-                      </td>
-                      <td>
-                        <%= b.employment_status || 'Unemployed' %>
-                      </td>
-                      <td>
-                        <%= b.stay_type || '-' %>
-                      </td>
-                      <td>
-                        <%= b.remarks || '-' %>
+                        <a href="/beneficiaries/detail/<%= b.id %>" class="btn btn-sm btn-primary btn-pill">View Details</a>
                       </td>
                     </tr>
                     <% }) %>
