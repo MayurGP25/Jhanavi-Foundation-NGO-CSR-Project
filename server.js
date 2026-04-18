@@ -58,6 +58,34 @@ app.set("views", path.join(__dirname, "views"));
     } catch (err) {
         // Silently skip — column is already VARCHAR or does not exist
     }
+
+    // Only beneficiary_name, contact_no, alternate_mobile + Office Use fields are mandatory.
+    // Allow NULL on columns that were previously NOT NULL so that
+    // partial registrations succeed.
+    const nullableMigrations = [
+        "ALTER TABLE beneficiaries MODIFY COLUMN guardian_name VARCHAR(150) NULL",
+        "ALTER TABLE beneficiaries MODIFY COLUMN age INT NULL",
+        "ALTER TABLE beneficiaries MODIFY COLUMN gender VARCHAR(10) NULL",
+        "ALTER TABLE beneficiaries MODIFY COLUMN location VARCHAR(255) NULL",
+        "ALTER TABLE beneficiaries MODIFY COLUMN contact_no VARCHAR(15) NULL",
+        "ALTER TABLE beneficiaries MODIFY COLUMN stay_type VARCHAR(20) NULL",
+    ];
+    for (const sql of nullableMigrations) {
+        try { await db.query(sql); } catch (err) { /* already migrated */ }
+    }
+
+    // Add Office Use fields as persistent DB columns.
+    const officeUseColumns = [
+        "ALTER TABLE beneficiaries ADD COLUMN shelter_name VARCHAR(255) NOT NULL DEFAULT ''",
+        "ALTER TABLE beneficiaries ADD COLUMN shelter_location VARCHAR(255) NOT NULL DEFAULT ''",
+        "ALTER TABLE beneficiaries ADD COLUMN ward_no VARCHAR(50) NOT NULL DEFAULT ''",
+        "ALTER TABLE beneficiaries ADD COLUMN ulb_name VARCHAR(255) NOT NULL DEFAULT 'Municipal Corporation'",
+        "ALTER TABLE beneficiaries ADD COLUMN agency_name VARCHAR(255) NOT NULL DEFAULT ''",
+        "ALTER TABLE beneficiaries ADD COLUMN alternate_mobile VARCHAR(15) NOT NULL DEFAULT ''",
+    ];
+    for (const sql of officeUseColumns) {
+        try { await db.query(sql); } catch (err) { /* column already exists */ }
+    }
 })();
 
 // Landing
