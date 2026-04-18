@@ -59,7 +59,7 @@ app.set("views", path.join(__dirname, "views"));
         // Silently skip — column is already VARCHAR or does not exist
     }
 
-    // BR23: Only beneficiary_name + Office Use fields are mandatory.
+    // Only beneficiary_name, contact_no, alternate_mobile + Office Use fields are mandatory.
     // Allow NULL on columns that were previously NOT NULL so that
     // partial registrations succeed.
     const nullableMigrations = [
@@ -74,7 +74,7 @@ app.set("views", path.join(__dirname, "views"));
         try { await db.query(sql); } catch (err) { /* already migrated */ }
     }
 
-    // BR23: Add Office Use fields as persistent DB columns.
+    // Add Office Use fields as persistent DB columns.
     const officeUseColumns = [
         "ALTER TABLE beneficiaries ADD COLUMN shelter_name VARCHAR(255) NOT NULL DEFAULT ''",
         "ALTER TABLE beneficiaries ADD COLUMN shelter_location VARCHAR(255) NOT NULL DEFAULT ''",

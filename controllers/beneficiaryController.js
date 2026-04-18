@@ -62,7 +62,7 @@ exports.addBeneficiary = async (req, res) => {
 
     const photo = req.file ? req.file.buffer : null;
 
-    // BR23: Only beneficiary_name + Office Use fields + alternate_mobile are mandatory.
+    // Only beneficiary_name, contact_no, alternate_mobile + Office Use fields are mandatory.
     // Coerce blank optional fields to null so the DB INSERT succeeds.
     const orNull = (v) => (v != null && String(v).trim() !== '') ? v : null;
 
@@ -378,7 +378,8 @@ exports.updateBeneficiary = async (req, res) => {
 
     const photo = req.file ? req.file.buffer : null;
 
-    // BR23: Coerce blank optional fields to null (same helper as addBeneficiary).
+    // Coerce blank optional fields to null (same rules as addBeneficiary).
+    // Mandatory: beneficiary_name, contact_no, alternate_mobile + Office Use fields.
     const orNull = (v) => (v != null && String(v).trim() !== '') ? v : null;
 
     try {
