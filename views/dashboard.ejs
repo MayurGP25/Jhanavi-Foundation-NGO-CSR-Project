@@ -11,12 +11,6 @@
     />
     <link href="/css/styles.css" rel="stylesheet" />
 
-    <!-- Disable back button after logout -->
-    <script>
-        window.history.forward();
-        function noBack() { window.history.forward(); }
-    </script>
-
     <style>
         body {
             background: radial-gradient(circle at top left, #e3f2fd, #f5f7fb);
@@ -79,6 +73,7 @@
         .card-title {
             font-size: 1.1rem;
             font-weight: 600;
+            color: #0f172a;
         }
         .card-text {
             font-size: 0.9rem;
@@ -102,7 +97,7 @@
     </style>
 </head>
 
-<body onload="noBack();" onpageshow="if (event.persisted) noBack();" onunload="">
+<body>
 <div class="app-shell">
 
     <!-- Top App Bar -->

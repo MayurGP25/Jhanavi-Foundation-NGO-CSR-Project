@@ -7,11 +7,9 @@ async function generatePDF(prefilled) {
     let d, photoData;
 
     if (prefilled) {
-        // ── Detail view: data supplied by caller ───────────────────────────
         d = prefilled.data;
         photoData = prefilled.photoSrc || null;
     } else {
-        // ── Add form: collect values from DOM inputs ───────────────────────
         const hasEmpty = ['beneficiary_name','guardian_name','age','education','id_mark',
             'location','native_place','health_status','habits','occupation_id',
             'occupation_place','reference_name','reference_address','contact_no','reason_ulb','remarks']
@@ -63,180 +61,193 @@ async function generatePDF(prefilled) {
         photoData = typeof uploadedPhotoData !== 'undefined' ? uploadedPhotoData : null;
     }
 
-    const pdf      = new jsPDF('p', 'mm', 'a4');
-    const pageW    = 210;
-    const marginX  = 10;
-    const contentW = pageW - marginX * 2;
-    const halfX    = marginX + contentW / 2;
-    const halfW    = contentW / 2;
-    const FH       = 8;
-    let y = 10;
+    const pageW      = 210;
+    const pageH      = 297;
+    const marginX    = 10;
+    const marginY    = 10;
+    const bottomM    = 15;
+    const contentW   = pageW - marginX * 2;
+    const halfX      = marginX + contentW / 2;
+    const halfW      = contentW / 2;
+    const availableH = pageH - marginY - bottomM; // 272mm
 
-    // ── helpers ──────────────────────────────────────────────────────────────
-    function sectionBar(title) {
-        pdf.setFillColor(210, 210, 215);
-        pdf.rect(marginX, y, contentW, 6.5, 'F');
-        pdf.setDrawColor(160); pdf.setLineWidth(0.2);
-        pdf.line(marginX, y, marginX + contentW, y);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        pdf.setTextColor(40);
-        pdf.text(title, marginX + 3, y + 4.5);
-        pdf.setTextColor(0);
-        y += 6.5;
-    }
+    // ── layout engine – runs twice: once to measure, once to draw ────────────
+    function buildLayout(pdf, scale) {
+        const FH       = 8  * scale;
+        const secH     = 6.5 * scale;
+        const titleH   = 11  * scale;
+        const photoW   = 28; // physical passport photo, not scaled
+        const photoH   = 4 * FH;
+        const nameW    = contentW - photoW;
+        const photoX   = marginX + contentW - photoW;
+        let y = marginY;
 
-    function row(label, value, x, w, opts) {
-        opts = opts || {};
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        pdf.setTextColor(opts.labelColor || 70);
-        pdf.text(label, x + 2, y + 5.5);
-        const lw = pdf.getTextWidth(label) + 3;
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
-        pdf.setTextColor(0);
-        const val = String(value || '');
-        const maxValW = w - lw - 4;
-        const truncated = pdf.getTextWidth(val) > maxValW
-            ? pdf.splitTextToSize(val, maxValW)[0]
-            : val;
-        pdf.text(truncated, x + 2 + lw, y + 5.5);
-        pdf.setDrawColor(210); pdf.setLineWidth(0.15);
-        pdf.line(x, y + FH, x + w, y + FH);
-        if (!opts.noAdvance) y += FH;
-    }
+        function sectionBar(title) {
+            pdf.setFillColor(210, 210, 215);
+            pdf.rect(marginX, y, contentW, secH, 'F');
+            pdf.setDrawColor(160); pdf.setLineWidth(0.2);
+            pdf.line(marginX, y, marginX + contentW, y);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8 * scale);
+            pdf.setTextColor(40);
+            pdf.text(title, marginX + 3, y + secH * 0.7);
+            pdf.setTextColor(0);
+            y += secH;
+        }
 
-    function row2(lbl1, val1, lbl2, val2) {
-        const rowY = y;
-        row(lbl1, val1, marginX, halfW, { noAdvance: true });
-        row(lbl2, val2, halfX,   halfW, { noAdvance: true });
-        pdf.setDrawColor(210); pdf.setLineWidth(0.2);
-        pdf.line(halfX, rowY, halfX, rowY + FH);
-        y += FH;
-    }
+        function row(label, value, x, w, opts) {
+            opts = opts || {};
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8 * scale);
+            pdf.setTextColor(opts.labelColor || 70);
+            pdf.text(label, x + 2, y + FH * 0.69);
+            const lw = pdf.getTextWidth(label) + 3;
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(10 * scale);
+            pdf.setTextColor(0);
+            const val = String(value || '');
+            const maxValW = w - lw - 4;
+            const truncated = pdf.getTextWidth(val) > maxValW
+                ? pdf.splitTextToSize(val, maxValW)[0]
+                : val;
+            pdf.text(truncated, x + 2 + lw, y + FH * 0.69);
+            pdf.setDrawColor(210); pdf.setLineWidth(0.15);
+            pdf.line(x, y + FH, x + w, y + FH);
+            if (!opts.noAdvance) y += FH;
+        }
 
-    function stackedRow(label, value, x, w) {
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        pdf.setTextColor(70);
-        pdf.text(label, x + 2, y + 5.5);
-        pdf.setDrawColor(210); pdf.setLineWidth(0.15);
-        pdf.line(x, y + FH, x + w, y + FH);
-        y += FH;
+        function row2(lbl1, val1, lbl2, val2) {
+            const ry = y;
+            row(lbl1, val1, marginX, halfW, { noAdvance: true });
+            row(lbl2, val2, halfX,   halfW, { noAdvance: true });
+            pdf.setDrawColor(210); pdf.setLineWidth(0.2);
+            pdf.line(halfX, ry, halfX, ry + FH);
+            y += FH;
+        }
 
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
-        pdf.setTextColor(0);
-        const lines = pdf.splitTextToSize(String(value || ''), w - 4);
-        const usedLines = lines.slice(0, 4);
-        usedLines.forEach(ln => {
-            pdf.text(ln, x + 2, y + 5.5);
+        function stackedRow(label, value, x, w) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8 * scale);
+            pdf.setTextColor(70);
+            pdf.text(label, x + 2, y + FH * 0.69);
             pdf.setDrawColor(210); pdf.setLineWidth(0.15);
             pdf.line(x, y + FH, x + w, y + FH);
             y += FH;
-        });
-        if (usedLines.length === 0) {
-            pdf.line(x, y + FH, x + w, y + FH);
-            y += FH;
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(10 * scale);
+            pdf.setTextColor(0);
+            const lines = pdf.splitTextToSize(String(value || ''), w - 4);
+            if (lines.length === 0) {
+                pdf.line(x, y + FH, x + w, y + FH);
+                y += FH;
+            } else {
+                lines.forEach(ln => {
+                    pdf.text(ln, x + 2, y + FH * 0.69);
+                    pdf.setDrawColor(210); pdf.setLineWidth(0.15);
+                    pdf.line(x, y + FH, x + w, y + FH);
+                    y += FH;
+                });
+            }
         }
-    }
 
-    // ── TITLE ────────────────────────────────────────────────────────────────
-    pdf.setFillColor(28, 38, 75);
-    pdf.rect(marginX, y, contentW, 11, 'F');
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(13);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text('Registration of Beneficiary', pageW / 2, y + 7.5, { align: 'center' });
-    pdf.setTextColor(0);
-    y += 11;
-
-    // ── PHOTO + FIRST FIELDS ─────────────────────────────────────────────────
-    const photoW = 28;
-    const photoH = 4 * FH;
-    const photoX = marginX + contentW - photoW;
-    const nameW  = contentW - photoW;
-
-    pdf.setDrawColor(100); pdf.setLineWidth(0.4);
-    pdf.rect(photoX, y, photoW, photoH);
-    if (photoData) {
-        try { pdf.addImage(photoData, 'JPEG', photoX + 1, y + 1, photoW - 2, photoH - 2); }
-        catch (e) { /* skip on format error */ }
-    } else {
-        pdf.setFontSize(7); pdf.setTextColor(150);
-        pdf.text('PHOTO', photoX + photoW / 2, y + photoH / 2 + 1, { align: 'center' });
+        // ── TITLE ────────────────────────────────────────────────────────────
+        pdf.setFillColor(28, 38, 75);
+        pdf.rect(marginX, y, contentW, titleH, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(13 * scale);
+        pdf.setTextColor(255, 255, 255);
+        pdf.text('Registration of Beneficiary', pageW / 2, y + titleH * 0.68, { align: 'center' });
         pdf.setTextColor(0);
+        y += titleH;
+
+        // ── PHOTO + FIRST FIELDS ─────────────────────────────────────────────
+        pdf.setDrawColor(100); pdf.setLineWidth(0.4);
+        pdf.rect(photoX, y, photoW, photoH);
+        if (photoData) {
+            try {
+                const fmt = /^data:image\/(png)/i.test(photoData) ? 'PNG' : 'JPEG';
+                pdf.addImage(photoData, fmt, photoX + 1, y + 1, photoW - 2, photoH - 2);
+            } catch (e) { /* skip on format error */ }
+        } else {
+            pdf.setFontSize(7 * scale); pdf.setTextColor(150);
+            pdf.text('PHOTO', photoX + photoW / 2, y + photoH / 2 + 1, { align: 'center' });
+            pdf.setTextColor(0);
+        }
+        pdf.setDrawColor(200); pdf.setLineWidth(0.2);
+        pdf.line(photoX, y, photoX, y + photoH);
+
+        row('Name:',                      d.beneficiary_name, marginX, nameW);
+        row('Father / Mother / Husband:', d.guardian_name,    marginX, nameW);
+
+        const halfNameX = marginX + nameW / 2;
+        const halfNameW = nameW / 2;
+        const nameRowY  = y;
+        row('Age:',    d.age,    marginX,   halfNameW, { noAdvance: true });
+        row('Gender:', d.gender, halfNameX, halfNameW, { noAdvance: true });
+        pdf.setDrawColor(210); pdf.setLineWidth(0.2);
+        pdf.line(halfNameX, nameRowY, halfNameX, nameRowY + FH);
+        y += FH;
+
+        row('Qualification:', d.education, marginX, nameW);
+
+        // ── PERSONAL INFORMATION ─────────────────────────────────────────────
+        sectionBar('PERSONAL INFORMATION');
+        row2('Marital Status:', d.marital_status, 'No. of Children:', d.children_count);
+        row('Personal Identification Mark:', d.id_mark, marginX, contentW);
+
+        // ── LOCATION & EMPLOYMENT ────────────────────────────────────────────
+        sectionBar('LOCATION & EMPLOYMENT');
+        stackedRow('Location / Whereabouts:',         d.location,        marginX, contentW);
+        stackedRow('Native Place Address:',           d.native_place,     marginX, contentW);
+        stackedRow('Occupation / Activity:',          d.occupation_id,    marginX, contentW);
+        row(        'Place of Occupation / Activity:', d.occupation_place, marginX, contentW);
+
+        // ── CONTACT & REFERENCES ─────────────────────────────────────────────
+        sectionBar('CONTACT & REFERENCES');
+        row('Reference Person Name:', d.reference_name,    marginX, contentW);
+        row('Reference Address:',     d.reference_address, marginX, contentW);
+        row('Contact Number:',        d.contact_no,        marginX, contentW);
+
+        // ── HEALTH & STAY ────────────────────────────────────────────────────
+        sectionBar('HEALTH & STAY');
+        row2('Health Status:', d.health_status, 'Habits:', d.habits);
+        row2('Reason for Stay in the ULB:', d.reason_ulb, 'Stay Type:', d.stay_type);
+        stackedRow('Remarks / Special Attention:', d.remarks, marginX, contentW);
+
+        // ── SIGNATURES ───────────────────────────────────────────────────────
+        const sigH = FH * 6;
+        pdf.setFillColor(248, 248, 248);
+        pdf.rect(marginX, y, contentW, sigH, 'F');
+        pdf.setDrawColor(200); pdf.setLineWidth(0.2);
+        pdf.line(halfX, y, halfX, y + sigH);
+        pdf.line(marginX, y + sigH, marginX + contentW, y + sigH);
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5 * scale); pdf.setTextColor(60);
+        pdf.text('Signature / Thumb Impression', marginX + 3, y + FH * 0.75);
+        pdf.text('Signature of the Surveyor',    halfX + 3,   y + FH * 0.75);
+        pdf.setTextColor(0);
+        y += sigH;
+
+        // ── OFFICE USE ONLY ──────────────────────────────────────────────────
+        sectionBar('OFFICE USE ONLY');
+        row2('Name of the Shelter:', d.shelter,    'Location:',  d.shelterLoc);
+        row2('Name of the ULB:',     d.ulb,        'Ward No:',   d.ward);
+        row('Shelter Management Agency Name:', d.agency, marginX, contentW);
+
+        // Outer border
+        pdf.setDrawColor(0); pdf.setLineWidth(0.5);
+        pdf.rect(marginX, marginY, contentW, y - marginY);
+
+        return y; // total content end position
     }
 
-    pdf.setDrawColor(200); pdf.setLineWidth(0.2);
-    pdf.line(photoX, y, photoX, y + photoH);
+    // Pass 1 — measure with scale=1.0 using a throwaway PDF instance
+    const measurePdf = new jsPDF('p', 'mm', 'a4');
+    const measuredEnd = buildLayout(measurePdf, 1.0);
+    const measuredH   = measuredEnd - marginY;
 
-    row('Name:',                      d.beneficiary_name, marginX, nameW);
-    row('Father / Mother / Husband:', d.guardian_name,    marginX, nameW);
-
-    const halfNameX = marginX + nameW / 2;
-    const halfNameW = nameW / 2;
-    const rowY = y;
-    row('Age:',    d.age,    marginX,   halfNameW, { noAdvance: true });
-    row('Gender:', d.gender, halfNameX, halfNameW, { noAdvance: true });
-    pdf.setDrawColor(210); pdf.setLineWidth(0.2);
-    pdf.line(halfNameX, rowY, halfNameX, rowY + FH);
-    y += FH;
-
-    row('Qualification:', d.education, marginX, nameW);
-
-    // ── PERSONAL INFORMATION ─────────────────────────────────────────────────
-    sectionBar('PERSONAL INFORMATION');
-
-    row2('Marital Status:', d.marital_status, 'No. of Children:', d.children_count);
-    row('Personal Identification Mark:', d.id_mark, marginX, contentW);
-
-    // ── LOCATION & EMPLOYMENT ────────────────────────────────────────────────
-    sectionBar('LOCATION & EMPLOYMENT');
-
-    stackedRow('Location / Whereabouts:',          d.location,         marginX, contentW);
-    stackedRow('Native Place Address:',            d.native_place,      marginX, contentW);
-    stackedRow('Occupation / Activity:',           d.occupation_id,     marginX, contentW);
-    row(        'Place of Occupation / Activity:',  d.occupation_place,  marginX, contentW);
-
-    // ── CONTACT & REFERENCES ─────────────────────────────────────────────────
-    sectionBar('CONTACT & REFERENCES');
-
-    row('Reference Person Name:', d.reference_name,    marginX, contentW);
-    row('Reference Address:',     d.reference_address, marginX, contentW);
-    row('Contact Number:',        d.contact_no,        marginX, contentW);
-
-    // ── HEALTH & STAY ────────────────────────────────────────────────────────
-    sectionBar('HEALTH & STAY');
-
-    row2('Health Status:', d.health_status, 'Habits:', d.habits);
-    row2('Reason for Stay in the ULB:', d.reason_ulb, 'Stay Type:', d.stay_type);
-    stackedRow('Remarks / Special Attention:', d.remarks, marginX, contentW);
-
-    // ── SIGNATURES ───────────────────────────────────────────────────────────
-    const sigH = FH * 6; // tall box — label at top, blank space below for signing
-    pdf.setFillColor(248, 248, 248);
-    pdf.rect(marginX, y, contentW, sigH, 'F');
-    pdf.setDrawColor(200); pdf.setLineWidth(0.2);
-    pdf.line(halfX, y, halfX, y + sigH);
-    pdf.line(marginX, y + sigH, marginX + contentW, y + sigH);
-    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(60);
-    pdf.text('Signature / Thumb Impression', marginX + 3, y + 6);
-    pdf.text('Signature of the Surveyor',    halfX + 3,   y + 6);
-    pdf.setTextColor(0);
-    y += sigH;
-
-    // ── OFFICE USE ONLY ──────────────────────────────────────────────────────
-    sectionBar('OFFICE USE ONLY');
-
-    row2('Name of the Shelter:', d.shelter,    'Location:',  d.shelterLoc);
-    row2('Name of the ULB:',     d.ulb,        'Ward No:',   d.ward);
-    row('Shelter Management Agency Name:', d.agency, marginX, contentW);
-
-    // Outer border
-    pdf.setDrawColor(0); pdf.setLineWidth(0.5);
-    pdf.rect(marginX, 10, contentW, y - 10);
-
-    pdf.save('beneficiary_form.pdf');
+    // Pass 2 — scale to fit (floor at 0.65 to keep text readable), then render for real
+    const scale   = Math.max(0.65, Math.min(1.0, availableH / measuredH));
+    const realPdf = new jsPDF('p', 'mm', 'a4');
+    buildLayout(realPdf, scale);
+    realPdf.save('beneficiary_form.pdf');
 }
