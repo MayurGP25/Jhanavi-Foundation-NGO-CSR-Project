@@ -67,7 +67,7 @@ exports.addBeneficiary = async (req, res) => {
     const orNull = (v) => (v != null && String(v).trim() !== '') ? v : null;
 
     try {
-        await db.query(
+        const [result] = await db.query(
             `INSERT INTO beneficiaries
             (beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
              location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
@@ -83,7 +83,8 @@ exports.addBeneficiary = async (req, res) => {
              shelter_name, shelter_location, ward_no, ulb_name, agency_name, alternate_mobile]
         );
 
-        res.redirect("/beneficiaries/menu");
+        // Land on the new record's detail page; ?success=added triggers the success toast there.
+        res.redirect(`/beneficiaries/detail/${result.insertId}?success=added`);
 
     } catch (err) {
         console.error(err);
@@ -311,7 +312,9 @@ exports.showBeneficiaryDetail = async (req, res) => {
         res.render("beneficiary-detail", {
             user: req.session.user,
             beneficiary: rows[0],
-            jobTypes
+            jobTypes,
+            // 'added' or 'updated' from redirect query param; drives the success toast in the view.
+            successMessage: req.query.success || null
         });
 
     } catch (err) {
@@ -411,7 +414,8 @@ exports.updateBeneficiary = async (req, res) => {
 
         await db.query(sql, params);
 
-        res.redirect("/beneficiaries/edit");
+        // Land on the updated record immediately; ?success=updated triggers the success toast there.
+        res.redirect(`/beneficiaries/detail/${id}?success=updated`);
 
     } catch (err) {
         console.error(err);
@@ -426,7 +430,7 @@ exports.deleteBeneficiary = async (req, res) => {
     const id = req.params.id;
     try {
         await db.query("DELETE FROM beneficiaries WHERE id = ?", [id]);
-        res.redirect("/beneficiaries/edit");
+        res.redirect("/beneficiaries/view");
     } catch (err) {
         console.error(err);
         res.send("Error deleting beneficiary.");
