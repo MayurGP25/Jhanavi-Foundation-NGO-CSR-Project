@@ -51,22 +51,36 @@ exports.addBeneficiary = async (req, res) => {
         contact_no,
         reason_ulb,
         stay_type,
-        remarks
+        remarks,
+        shelter_name,
+        shelter_location,
+        ward_no,
+        ulb_name,
+        agency_name,
+        alternate_mobile
     } = req.body;
 
     const photo = req.file ? req.file.buffer : null;
+
+    // Only beneficiary_name, contact_no, alternate_mobile + Office Use fields are mandatory.
+    // Coerce blank optional fields to null so the DB INSERT succeeds.
+    const orNull = (v) => (v != null && String(v).trim() !== '') ? v : null;
 
     try {
         await db.query(
             `INSERT INTO beneficiaries
             (beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
              location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
-             contact_no, reason_ulb, stay_type, remarks, photo, employment_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             contact_no, reason_ulb, stay_type, remarks, photo, employment_status,
+             shelter_name, shelter_location, ward_no, ulb_name, agency_name, alternate_mobile)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
-            [beneficiary_name, guardian_name, age, gender, education, marital_status, children_count, id_mark,
-             location, health_status, habits, occupation_id, occupation_place, native_place, reference_name, reference_address,
-             contact_no, reason_ulb, stay_type, remarks, photo, 'Unemployed']
+            [beneficiary_name, orNull(guardian_name), orNull(age), orNull(gender), orNull(education),
+             orNull(marital_status), orNull(children_count), orNull(id_mark),
+             orNull(location), orNull(health_status), orNull(habits), orNull(occupation_id),
+             orNull(occupation_place), orNull(native_place), orNull(reference_name), orNull(reference_address),
+             orNull(contact_no), orNull(reason_ulb), orNull(stay_type), orNull(remarks), photo, 'Unemployed',
+             shelter_name, shelter_location, ward_no, ulb_name, agency_name, alternate_mobile]
         );
 
         res.redirect("/beneficiaries/menu");
@@ -353,23 +367,37 @@ exports.updateBeneficiary = async (req, res) => {
         reason_ulb,
         stay_type,
         remarks,
-        employment_status // <-- ADD THIS
+        employment_status,
+        shelter_name,
+        shelter_location,
+        ward_no,
+        ulb_name,
+        agency_name,
+        alternate_mobile
     } = req.body;
 
     const photo = req.file ? req.file.buffer : null;
+
+    // Coerce blank optional fields to null (same rules as addBeneficiary).
+    // Mandatory: beneficiary_name, contact_no, alternate_mobile + Office Use fields.
+    const orNull = (v) => (v != null && String(v).trim() !== '') ? v : null;
 
     try {
         let sql = `UPDATE beneficiaries SET
             beneficiary_name = ?, guardian_name = ?, age = ?, gender = ?, education = ?,
             marital_status = ?, children_count = ?, id_mark = ?, location = ?, health_status = ?,
             habits = ?, occupation_id = ?, occupation_place = ?, native_place = ?, reference_name = ?,
-            reference_address = ?, contact_no = ?, reason_ulb = ?, stay_type = ?, remarks = ?, employment_status = ?`;
+            reference_address = ?, contact_no = ?, reason_ulb = ?, stay_type = ?, remarks = ?, employment_status = ?,
+            shelter_name = ?, shelter_location = ?, ward_no = ?, ulb_name = ?, agency_name = ?, alternate_mobile = ?`;
 
         const params = [
-            beneficiary_name, guardian_name, age, gender, education, marital_status,
-            children_count, id_mark, location, health_status, habits, occupation_id,
-            occupation_place, native_place, reference_name, reference_address, contact_no,
-            reason_ulb, stay_type, remarks, employment_status || 'Unemployed'
+            beneficiary_name, orNull(guardian_name), orNull(age), orNull(gender), orNull(education),
+            orNull(marital_status), orNull(children_count), orNull(id_mark), orNull(location),
+            orNull(health_status), orNull(habits), orNull(occupation_id),
+            orNull(occupation_place), orNull(native_place), orNull(reference_name), orNull(reference_address),
+            orNull(contact_no), orNull(reason_ulb), orNull(stay_type), orNull(remarks),
+            employment_status || 'Unemployed',
+            shelter_name, shelter_location, ward_no, ulb_name, agency_name, alternate_mobile
         ];
 
         // Only update photo if a new one is uploaded

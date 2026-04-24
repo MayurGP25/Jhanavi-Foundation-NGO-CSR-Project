@@ -313,9 +313,14 @@
                             <div class="error-message" id="reference_address-error">Reference Address is required</div>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Contact Number</label>
+                            <label class="form-label fw-semibold">Contact Number *</label>
                             <input type="tel" class="form-control" id="contact_no" name="contact_no" value="<%= beneficiary.contact_no %>">
                             <div class="error-message" id="contact_no-error">Contact Number is required</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Alternate Mobile Number *</label>
+                            <input type="tel" class="form-control" id="alternate_mobile" name="alternate_mobile" value="<%= beneficiary.alternate_mobile || '' %>">
+                            <div class="error-message" id="alternate_mobile-error">Alternate Mobile Number is required</div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Reason for ULB Stay</label>
@@ -345,6 +350,35 @@
     <div class="error-message" id="employment_status-error">Employment Status is required</div>
 </div>
 <!-- ...existing code... -->
+                    </div>
+
+                    <div class="section-title">Office Use Only</div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Name of the Shelter *</label>
+                            <input type="text" class="form-control" id="shelterName" name="shelter_name" value="<%= beneficiary.shelter_name || '' %>">
+                            <div class="error-message" id="shelterName-error">Name of the Shelter is required</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Location *</label>
+                            <input type="text" class="form-control" id="shelterLocation" name="shelter_location" value="<%= beneficiary.shelter_location || '' %>">
+                            <div class="error-message" id="shelterLocation-error">Location is required</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Name of the ULB *</label>
+                            <input type="text" class="form-control" id="ulbName" name="ulb_name" value="<%= beneficiary.ulb_name || 'Municipal Corporation' %>">
+                            <div class="error-message" id="ulbName-error">Name of the ULB is required</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Ward No *</label>
+                            <input type="text" class="form-control" id="wardNo" name="ward_no" value="<%= beneficiary.ward_no || '' %>">
+                            <div class="error-message" id="wardNo-error">Ward No is required</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Shelter Management Agency Name *</label>
+                            <input type="text" class="form-control" id="agencyName" name="agency_name" value="<%= beneficiary.agency_name || '' %>">
+                            <div class="error-message" id="agencyName-error">Shelter Management Agency Name is required</div>
+                        </div>
                     </div>
 
                     <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-4">
@@ -427,21 +461,13 @@
             e.preventDefault();
             const valid = validateBeneficiaryForm([
                 { id: 'beneficiary_name' },
-                { id: 'guardian_name' },
-                { id: 'age' },
-                { id: 'education' },
-                { id: 'id_mark' },
-                { id: 'location' },
-                { id: 'native_place' },
-                { id: 'health_status' },
-                { id: 'habits' },
-                { id: 'occupation_id',     type: 'occupation' }, // highlights occupationToggle wrapper
-                { id: 'occupation_place' },
-                { id: 'reference_name' },
-                { id: 'reference_address' },
                 { id: 'contact_no' },
-                { id: 'reason_ulb' },
-                { id: 'remarks' },
+                { id: 'alternate_mobile' },
+                { id: 'shelterName' },
+                { id: 'shelterLocation' },
+                { id: 'wardNo' },
+                { id: 'ulbName' },
+                { id: 'agencyName' },
             ]);
             if (valid) this.submit();
         });
