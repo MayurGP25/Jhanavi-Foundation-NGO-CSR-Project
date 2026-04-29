@@ -102,4 +102,5 @@ app.use("/beneficiaries", beneficiaryRoutes);
 app.use("/jobproviders", jobProviderRoutes);
 app.use("/jobmatching", jobMatchingRoutes);
 
-app.listen(3000, () => console.log("Server running at http://localhost:3000"));
+//app.listen(3000, () => console.log("Server running at http://localhost:3000"));
+export default app;
