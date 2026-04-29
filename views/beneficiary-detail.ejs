@@ -228,6 +228,30 @@
                     </div>
                 </div>
 
+                <div class="section-title">Office Use Only</div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Name of the Shelter</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.shelter_name || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Shelter Location</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.shelter_location || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Name of the ULB</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.ulb_name || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Ward No</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.ward_no || '' %>" disabled>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Shelter Management Agency Name</label>
+                        <input type="text" class="form-control" value="<%= beneficiary.agency_name || '' %>" disabled>
+                    </div>
+                </div>
+
                 <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-4">
                     <a href="/beneficiaries/view" class="btn btn-outline-secondary btn-pill">Back to List</a>
                     <a href="/beneficiaries/edit/<%= beneficiary.id %>" class="btn btn-warning btn-pill">Edit Beneficiary</a>
@@ -281,14 +305,16 @@
                     reference_name:    <%- JSON.stringify(beneficiary.reference_name || '') %>,
                     reference_address: <%- JSON.stringify(beneficiary.reference_address || '') %>,
                     contact_no:        <%- JSON.stringify(beneficiary.contact_no || '') %>,
+                    alternate_mobile:  <%- JSON.stringify(beneficiary.alternate_mobile || '') %>,
                     reason_ulb:        <%- JSON.stringify(beneficiary.reason_ulb || '') %>,
                     stay_type:         <%- JSON.stringify(beneficiary.stay_type || '') %>,
+                    employment_status: <%- JSON.stringify(beneficiary.employment_status || '') %>,
                     remarks:           <%- JSON.stringify(beneficiary.remarks || '') %>,
-                    shelter:    '',
-                    shelterLoc: '',
-                    ulb:        '',
-                    agency:     '',
-                    ward:       '',
+                    shelter:    <%- JSON.stringify(beneficiary.shelter_name    || '') %>,
+                    shelterLoc: <%- JSON.stringify(beneficiary.shelter_location || '') %>,
+                    ulb:        <%- JSON.stringify(beneficiary.ulb_name         || '') %>,
+                    agency:     <%- JSON.stringify(beneficiary.agency_name      || '') %>,
+                    ward:       <%- JSON.stringify(beneficiary.ward_no          || '') %>,
                 },
                 photoSrc: photoSrc
             });

@@ -340,18 +340,17 @@
                             <textarea class="form-control" id="remarks" name="remarks" rows="3"><%= beneficiary.remarks %></textarea>
                             <div class="error-message" id="remarks-error">Remarks / Special Attention is required</div>
                         </div>
-                        <!-- ...existing code... -->
-<div class="col-12 col-md-4">
-    <label class="form-label fw-semibold">Employment Status</label>
-    <select class="form-select" id="employment_status" name="employment_status">
-        <% const isEmployed = beneficiary.employment_status && beneficiary.employment_status.toLowerCase() === 'employed'; %>
-        <option value="Unemployed" <%= !isEmployed ? 'selected' : '' %>>Unemployed</option>
-        <option value="Employed" <%= isEmployed ? 'selected' : '' %>>Employed</option>
-    </select>
-    <div class="error-message" id="employment_status-error">Employment Status is required</div>
-</div>
-<!-- ...existing code... -->
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold">Employment Status</label>
+                            <select class="form-select" id="employment_status" name="employment_status">
+                                <% const isEmployed = beneficiary.employment_status && beneficiary.employment_status.toLowerCase() === 'employed'; %>
+                                <option value="Unemployed" <%= !isEmployed ? 'selected' : '' %>>Unemployed</option>
+                                <option value="Employed" <%= isEmployed ? 'selected' : '' %>>Employed</option>
+                            </select>
+                            <div class="error-message" id="employment_status-error">Employment Status is required</div>
+                        </div>
                     </div>
+
 
                     <div class="section-title">Office Use Only</div>
                     <div class="row g-3">
@@ -462,8 +461,8 @@
             e.preventDefault();
             const valid = validateBeneficiaryForm([
                 { id: 'beneficiary_name' },
-                { id: 'contact_no' },
-                { id: 'alternate_mobile' },
+                { id: 'contact_no',       regex: /^[6-9]\d{9}$/, regexMsg: 'Enter a valid 10-digit Indian mobile number' },
+                { id: 'alternate_mobile', regex: /^[6-9]\d{9}$/, regexMsg: 'Enter a valid 10-digit Indian mobile number' },
                 { id: 'shelterName' },
                 { id: 'shelterLocation' },
                 { id: 'wardNo' },
@@ -473,6 +472,11 @@
             ]);
             if (valid) this.submit();
         });
+
+        attachRealtimeRegexValidation([
+            { id: 'contact_no',       regex: /^[6-9]\d{9}$/, regexMsg: 'Enter a valid 10-digit Indian mobile number' },
+            { id: 'alternate_mobile', regex: /^[6-9]\d{9}$/, regexMsg: 'Enter a valid 10-digit Indian mobile number' },
+        ]);
 
         // Live range check for age
         document.getElementById('age').addEventListener('input', function() {

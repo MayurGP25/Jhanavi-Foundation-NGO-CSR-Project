@@ -80,7 +80,7 @@
                 <th style="width: 170px;">Employment</th>
                 <th style="width: 140px;">Occupation ID</th>
                 <th style="width: 160px;">Contact</th>
-                <th class="text-end" style="width: 520px;">Create Match</th>
+                <th style="width: 520px;">Create Match</th>
               </tr>
             </thead>
             <tbody>
@@ -98,23 +98,12 @@
                     <td><span class="badge bg-warning text-dark"><%= b.employment_status %></span></td>
                     <td><%= b.occupation_id %></td>
                     <td><%= b.contact_no || '—' %></td>
-                    <td class="text-end">
-                      <form class="row g-2 justify-content-end" method="POST" action="/jobmatching/<%= job.id %>/match/<%= b.id %>">
-                        <div class="col-12 col-lg-3 text-start">
-                          <label class="form-label">Role in Company</label>
-                          <input type="text" name="role_in_company" class="form-control" placeholder="Optional" />
-                        </div>
-                        <div class="col-12 col-lg-3 text-start">
-                          <label class="form-label">Employment Start Date</label>
-                          <input type="date" name="employment_start_date" class="form-control" />
-                        </div>
-                        <div class="col-12 col-lg-4 text-start">
-                          <label class="form-label">Remarks</label>
-                          <input type="text" name="remarks" class="form-control" placeholder="Optional" />
-                        </div>
-                        <div class="col-12 col-lg-2 d-grid align-self-end">
-                          <button type="submit" class="btn btn-success btn-pill">Match</button>
-                        </div>
+                    <td>
+                      <form class="d-flex align-items-center gap-2 flex-nowrap justify-content-end" method="POST" action="/jobmatching/<%= job.id %>/match/<%= b.id %>">
+                        <input type="text" name="role_in_company" class="form-control form-control-sm" placeholder="Role" aria-label="Role in Company" style="width:110px;" />
+                        <input type="date" name="employment_start_date" class="form-control form-control-sm" aria-label="Employment Start Date" style="width:145px;" />
+                        <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Remarks" aria-label="Remarks" style="width:110px;" />
+                        <button type="submit" class="btn btn-success btn-sm btn-pill flex-shrink-0">Match</button>
                       </form>
                     </td>
                   </tr>
@@ -145,7 +134,7 @@
                 <th style="width: 170px;">Employment</th>
                 <th style="width: 140px;">Occupation ID</th>
                 <th style="width: 160px;">Contact</th>
-                <th class="text-end" style="width: 520px;">Create Match</th>
+                <th style="width: 520px;">Create Match</th>
               </tr>
             </thead>
             <tbody>
@@ -163,23 +152,12 @@
                     <td><span class="badge bg-info text-dark"><%= b.employment_status %></span></td>
                     <td><%= b.occupation_id %></td>
                     <td><%= b.contact_no || '—' %></td>
-                    <td class="text-end">
-                      <form class="row g-2 justify-content-end" method="POST" action="/jobmatching/<%= job.id %>/match/<%= b.id %>">
-                        <div class="col-12 col-lg-3 text-start">
-                          <label class="form-label">Role in Company</label>
-                          <input type="text" name="role_in_company" class="form-control" placeholder="Optional" />
-                        </div>
-                        <div class="col-12 col-lg-3 text-start">
-                          <label class="form-label">Employment Start Date</label>
-                          <input type="date" name="employment_start_date" class="form-control" />
-                        </div>
-                        <div class="col-12 col-lg-4 text-start">
-                          <label class="form-label">Remarks</label>
-                          <input type="text" name="remarks" class="form-control" placeholder="Optional" />
-                        </div>
-                        <div class="col-12 col-lg-2 d-grid align-self-end">
-                          <button type="submit" class="btn btn-success btn-pill">Match</button>
-                        </div>
+                    <td>
+                      <form class="d-flex align-items-center gap-2 flex-nowrap justify-content-end" method="POST" action="/jobmatching/<%= job.id %>/match/<%= b.id %>">
+                        <input type="text" name="role_in_company" class="form-control form-control-sm" placeholder="Role" aria-label="Role in Company" style="width:110px;" />
+                        <input type="date" name="employment_start_date" class="form-control form-control-sm" aria-label="Employment Start Date" style="width:145px;" />
+                        <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Remarks" aria-label="Remarks" style="width:110px;" />
+                        <button type="submit" class="btn btn-success btn-sm btn-pill flex-shrink-0">Match</button>
                       </form>
                     </td>
                   </tr>
