@@ -104,10 +104,13 @@ exports.viewBeneficiaries = async (req, res) => {
     const min_age = req.query.min_age || "";
     const max_age = req.query.max_age || "";
     const employment_status = req.query.employment_status || "";
-    
+    const occupationIdsParam = req.query.occupation_ids || "";
+    const occupationIds = occupationIdsParam ? occupationIdsParam.split(',').filter(Boolean) : [];
+
     try {
-      // ...existing code...
-let sql = `
+        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
+
+        let sql = `
   SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status
   FROM beneficiaries b
 `;
@@ -157,6 +160,11 @@ let sql = `
             conditions.push("employment_status = ?");
             params.push(employment_status);
         }
+        if (occupationIds.length > 0) {
+            const orClauses = occupationIds.map(() => 'FIND_IN_SET(?, b.occupation_id)').join(' OR ');
+            conditions.push(`(${orClauses})`);
+            occupationIds.forEach(id => params.push(id));
+        }
 
         if (conditions.length > 0) {
             sql += " WHERE " + conditions.join(" AND ");
@@ -167,6 +175,7 @@ let sql = `
         res.render("beneficiary-view", {
             user: req.session.user,
             beneficiaries: rows,
+            jobTypes,
             searchQuery,
             filters: {
                 gender,
@@ -177,7 +186,8 @@ let sql = `
                 stay_type,
                 min_age,
                 max_age,
-                employment_status
+                employment_status,
+                occupation_ids: occupationIdsParam
             }
         });
 
@@ -215,10 +225,13 @@ exports.showEditList = async (req, res) => {
     const min_age = req.query.min_age || "";
     const max_age = req.query.max_age || "";
     const employment_status = req.query.employment_status || "";
-    
+    const occupationIdsParam = req.query.occupation_ids || "";
+    const occupationIds = occupationIdsParam ? occupationIdsParam.split(',').filter(Boolean) : [];
+
     try {
-// ...existing code...
-let sql = `
+        const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
+
+        let sql = `
   SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status
   FROM beneficiaries b
 `;
@@ -268,6 +281,11 @@ let sql = `
             conditions.push("employment_status = ?");
             params.push(employment_status);
         }
+        if (occupationIds.length > 0) {
+            const orClauses = occupationIds.map(() => 'FIND_IN_SET(?, b.occupation_id)').join(' OR ');
+            conditions.push(`(${orClauses})`);
+            occupationIds.forEach(id => params.push(id));
+        }
 
         if (conditions.length > 0) {
             sql += " WHERE " + conditions.join(" AND ");
@@ -278,6 +296,7 @@ let sql = `
         res.render("beneficiary-edit-list", {
             user: req.session.user,
             beneficiaries: rows,
+            jobTypes,
             searchQuery,
             filters: {
                 gender,
@@ -288,7 +307,8 @@ let sql = `
                 stay_type,
                 min_age,
                 max_age,
-                employment_status
+                employment_status,
+                occupation_ids: occupationIdsParam
             }
         });
 

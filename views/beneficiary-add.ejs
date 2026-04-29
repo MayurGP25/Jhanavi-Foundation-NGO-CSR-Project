@@ -204,7 +204,7 @@
                         </div>
                         <div class="col-12 col-md-3">
                             <label class="form-label fw-semibold">Age</label>
-                            <input type="number" class="form-control" id="age" name="age" placeholder="Years">
+                            <input type="number" class="form-control" id="age" name="age" placeholder="Years" min="0" max="100">
                             <div class="error-message" id="age-error">Age is required</div>
                         </div>
                         <div class="col-12 col-md-3">
@@ -450,6 +450,7 @@
                 { id: 'wardNo' },
                 { id: 'ulbName' },
                 { id: 'agencyName' },
+                { id: 'age', required: false, min: 0, max: 100 },
             ]);
 
             if (valid) this.submit();
@@ -480,7 +481,27 @@
                 });
             }
         });
-        
+
+        // Live range check for age
+        document.getElementById('age').addEventListener('input', function() {
+            const err = document.getElementById('age-error');
+            const val = this.value.trim();
+            if (val === '') {
+                this.classList.remove('is-invalid');
+                err.classList.remove('show');
+            } else {
+                const num = parseFloat(val);
+                if (num < 0 || num > 100) {
+                    this.classList.add('is-invalid');
+                    err.textContent = 'Must be between 0 and 100';
+                    err.classList.add('show');
+                } else {
+                    this.classList.remove('is-invalid');
+                    err.classList.remove('show');
+                }
+            }
+        });
+
         function handlePhotoUpload(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
