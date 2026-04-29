@@ -5,7 +5,9 @@ const db = require("../config/db");
 // helper to normalize selected ids
 const normalizeIds = (ids) => {
     if (!ids) return [];
-    return Array.isArray(ids) ? ids : [ids];
+    if (Array.isArray(ids)) return ids;
+    if (typeof ids === 'string' && ids.includes(',')) return ids.split(',');
+    return [ids];
 };
 
 // Show Add Job Provider Form

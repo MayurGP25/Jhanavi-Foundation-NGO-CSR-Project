@@ -25,6 +25,47 @@
     .form-control, .form-select, textarea { border-radius: 12px; }
     textarea { min-height: 110px; }
     .help { font-size: .85rem; color: #6c757d; }
+    .jobtype-dropdown { position: relative; }
+    .jobtype-toggle {
+      width: 100%;
+      text-align: left;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #dee2e6;
+      padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 16px 12px;
+    }
+    .jobtype-toggle:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .jobtype-options {
+      position: absolute;
+      z-index: 1050;
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 12px;
+      width: 100%;
+      padding: 0.5rem 0;
+      margin-top: 2px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .jobtype-option label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    .jobtype-option label:hover { background: #f0f4ff; }
+    .jobtype-option-divider { border-top: 1px solid #dee2e6; margin: 4px 0; }
   </style>
 </head>
 
@@ -80,14 +121,29 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold">Select Job Types</label>
-              <select class="form-select" name="job_type_ids" multiple size="6">
-                <% jobTypes.forEach((jt) => { %>
-                  <option value="<%= jt.id %>" <%= selectedJobTypeIds && selectedJobTypeIds.includes(jt.id) ? 'selected' : '' %>>
-                    <%= jt.job_type_name %>
-                  </option>
-                <% }) %>
-              </select>
-              <div class="help mt-2">Hold Ctrl/Cmd to select multiple types.</div>
+              <input type="hidden" id="job_type_ids" name="job_type_ids">
+              <div class="jobtype-dropdown" id="jobtypeDropdown">
+                <button type="button" class="jobtype-toggle form-select text-start" id="jobtypeToggle" onclick="toggleJobtypeDropdown()">
+                  <span id="jobtypeDisplay">Select job type(s)</span>
+                </button>
+                <div class="jobtype-options" id="jobtypeOptions" style="display:none;">
+                  <div class="jobtype-option">
+                    <label>
+                      <input type="checkbox" id="selectAllJobTypes" onchange="toggleSelectAllJobTypes(this)">
+                      <strong>Select All / Deselect All</strong>
+                    </label>
+                  </div>
+                  <div class="jobtype-option-divider"></div>
+                  <% jobTypes.forEach(jt => { %>
+                  <div class="jobtype-option">
+                    <label>
+                      <input type="checkbox" class="jobtype-checkbox" value="<%= jt.id %>" data-label="<%= jt.job_type_name %>" onchange="updateJobtypeValue()">
+                      <%= jt.job_type_name %>
+                    </label>
+                  </div>
+                  <% }); %>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -136,5 +192,42 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleJobtypeDropdown() {
+      const opts = document.getElementById('jobtypeOptions');
+      opts.style.display = opts.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function updateJobtypeValue() {
+      const checkboxes = document.querySelectorAll('.jobtype-checkbox');
+      const selected = Array.from(checkboxes).filter(c => c.checked);
+      const ids = selected.map(c => c.value).join(',');
+      const labels = selected.map(c => c.dataset.label).join(', ');
+      document.getElementById('job_type_ids').value = ids;
+      document.getElementById('jobtypeDisplay').textContent = labels || 'Select job type(s)';
+      document.getElementById('selectAllJobTypes').checked = selected.length === checkboxes.length;
+    }
+
+    function toggleSelectAllJobTypes(cb) {
+      document.querySelectorAll('.jobtype-checkbox').forEach(c => { c.checked = cb.checked; });
+      updateJobtypeValue();
+    }
+
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('jobtypeDropdown');
+      if (!dropdown.contains(e.target)) {
+        document.getElementById('jobtypeOptions').style.display = 'none';
+      }
+    });
+
+    // Pre-select for edit mode
+    const preSelected = <%- JSON.stringify(selectedJobTypeIds) %>;
+    if (preSelected && preSelected.length) {
+      document.querySelectorAll('.jobtype-checkbox').forEach(cb => {
+        if (preSelected.includes(parseInt(cb.value))) cb.checked = true;
+      });
+      updateJobtypeValue();
+    }
+  </script>
 </body>
 </html>

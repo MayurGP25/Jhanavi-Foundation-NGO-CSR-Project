@@ -56,7 +56,7 @@ exports.viewBeneficiariesForJob = async (req, res) => {
              b.occupation_id,
              b.contact_no
       FROM beneficiaries b
-      WHERE b.employment_status = 'unemployed'
+      WHERE b.employment_status = 'Unemployed'
         AND b.occupation_id IN (
           SELECT job_type_id
           FROM job_provider_job_types
@@ -76,7 +76,7 @@ const [others] = await db.query(
            b.occupation_id,
            b.contact_no
     FROM beneficiaries b
-    WHERE b.employment_status != 'employed'
+    WHERE b.employment_status != 'Employed'
       AND NOT (
         b.employment_status = 'unemployed'
         AND b.occupation_id IN (
@@ -125,7 +125,7 @@ exports.createMatch = async (req, res) => {
       );
   
       await conn.query(
-        `UPDATE beneficiaries SET employment_status = 'employed' WHERE id = ?`,
+        `UPDATE beneficiaries SET employment_status = 'Employed' WHERE id = ?`,
         [beneficiaryId]
       );
   

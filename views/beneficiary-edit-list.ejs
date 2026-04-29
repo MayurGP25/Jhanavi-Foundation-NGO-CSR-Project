@@ -45,6 +45,47 @@
       background: rgba(255, 255, 255, 0.65);
       color: #0f172a;
     }
+    .occ-filter-dropdown { position: relative; }
+    .occ-filter-toggle {
+      width: 100%;
+      text-align: left;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #dee2e6;
+      padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 16px 12px;
+    }
+    .occ-filter-toggle:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .occ-filter-options {
+      position: absolute;
+      z-index: 1050;
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 12px;
+      width: 100%;
+      padding: 0.5rem 0;
+      margin-top: 2px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .occ-filter-option label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    .occ-filter-option label:hover { background: #f0f4ff; }
+    .occ-filter-divider { border-top: 1px solid #dee2e6; margin: 4px 0; }
   </style>
 </head>
 
@@ -167,6 +208,34 @@
               </select>
             </div>
 
+            <!-- Occupation Filter -->
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="form-label small fw-semibold">Occupation</label>
+              <input type="hidden" id="occupation_ids" name="occupation_ids" value="<%= filters && filters.occupation_ids ? filters.occupation_ids : '' %>">
+              <div class="occ-filter-dropdown" id="occFilterDropdown">
+                <button type="button" class="occ-filter-toggle" id="occFilterToggle" onclick="toggleOccFilterDropdown()">
+                  <span id="occFilterDisplay">All Occupations</span>
+                </button>
+                <div class="occ-filter-options" id="occFilterOptions" style="display:none;">
+                  <div class="occ-filter-option">
+                    <label>
+                      <input type="checkbox" id="occSelectAll" onchange="toggleOccSelectAll(this)">
+                      <strong>Select All / Deselect All</strong>
+                    </label>
+                  </div>
+                  <div class="occ-filter-divider"></div>
+                  <% jobTypes.forEach(jt => { %>
+                  <div class="occ-filter-option">
+                    <label>
+                      <input type="checkbox" class="occ-filter-cb" value="<%= jt.id %>" data-label="<%= jt.job_type_name %>" onchange="updateOccFilter()">
+                      <%= jt.job_type_name %>
+                    </label>
+                  </div>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="col-12">
               <div class="d-flex gap-2 justify-content-end">
@@ -181,7 +250,7 @@
           <div class="text-muted small">
             Tip: Use multiple filters to narrow down results.
           </div>
-          <% const hasFilters = searchQuery || (filters && (filters.gender || filters.marital_status || filters.education || filters.location || filters.health_status || filters.stay_type || filters.min_age || filters.max_age || filters.employment_status)); %>
+          <% const hasFilters = searchQuery || (filters && (filters.gender || filters.marital_status || filters.education || filters.location || filters.health_status || filters.stay_type || filters.min_age || filters.max_age || filters.employment_status || filters.occupation_ids)); %>
           <% if (hasFilters) { %>
           <div class="soft-badge">
             Results: <span class="fw-semibold">
@@ -239,6 +308,44 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleOccFilterDropdown() {
+      const opts = document.getElementById('occFilterOptions');
+      opts.style.display = opts.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function updateOccFilter() {
+      const checkboxes = document.querySelectorAll('.occ-filter-cb');
+      const selected = Array.from(checkboxes).filter(c => c.checked);
+      const ids = selected.map(c => c.value).join(',');
+      const labels = selected.map(c => c.dataset.label).join(', ');
+      document.getElementById('occupation_ids').value = ids;
+      document.getElementById('occFilterDisplay').textContent = labels || 'All Occupations';
+      document.getElementById('occSelectAll').checked = selected.length === checkboxes.length && checkboxes.length > 0;
+    }
+
+    function toggleOccSelectAll(cb) {
+      document.querySelectorAll('.occ-filter-cb').forEach(c => { c.checked = cb.checked; });
+      updateOccFilter();
+    }
+
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('occFilterDropdown');
+      if (!dropdown.contains(e.target)) {
+        document.getElementById('occFilterOptions').style.display = 'none';
+      }
+    });
+
+    // Restore active filter selections on page load
+    const activeOccIds = document.getElementById('occupation_ids').value;
+    if (activeOccIds) {
+      const active = activeOccIds.split(',');
+      document.querySelectorAll('.occ-filter-cb').forEach(cb => {
+        if (active.includes(cb.value)) cb.checked = true;
+      });
+      updateOccFilter();
+    }
+  </script>
 </body>
 
 </html>
