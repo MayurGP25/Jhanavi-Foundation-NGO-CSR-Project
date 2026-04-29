@@ -50,6 +50,9 @@ function validateBeneficiaryForm(fields) {
                 fieldInvalid = true;
                 if (err) err.textContent = `Must be between ${field.min} and ${field.max}`;
             }
+        } else if (!isEmpty && field.regex && !field.regex.test(rawVal)) {
+            fieldInvalid = true;
+            if (err) err.textContent = field.regexMsg || 'Invalid format';
         }
 
         if (fieldInvalid) {
@@ -69,4 +72,24 @@ function validateBeneficiaryForm(fields) {
     }
 
     return isValid;
+}
+
+function attachRealtimeRegexValidation(fields) {
+    fields.forEach(function(field) {
+        if (!field.regex) return;
+        const el  = document.getElementById(field.id);
+        const err = document.getElementById(field.id + '-error');
+        if (!el) return;
+        el.addEventListener('input', function() {
+            const val = this.value.trim();
+            if (val === '') return;
+            if (field.regex.test(val)) {
+                this.classList.remove('is-invalid');
+                if (err) err.classList.remove('show');
+            } else {
+                this.classList.add('is-invalid');
+                if (err) { err.textContent = field.regexMsg || 'Invalid format'; err.classList.add('show'); }
+            }
+        });
+    });
 }

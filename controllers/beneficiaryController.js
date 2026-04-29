@@ -62,6 +62,12 @@ exports.addBeneficiary = async (req, res) => {
 
     const photo = req.file ? req.file.buffer : null;
 
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(contact_no))
+        return res.status(400).json({ error: 'Contact number must be a valid 10-digit Indian mobile number.' });
+    if (!mobileRegex.test(alternate_mobile))
+        return res.status(400).json({ error: 'Alternate mobile must be a valid 10-digit Indian mobile number.' });
+
     // Only beneficiary_name, contact_no, alternate_mobile + Office Use fields are mandatory.
     // Coerce blank optional fields to null so the DB INSERT succeeds.
     const orNull = (v) => (v != null && String(v).trim() !== '') ? v : null;
@@ -111,7 +117,8 @@ exports.viewBeneficiaries = async (req, res) => {
         const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
 
         let sql = `
-  SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status
+  SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status,
+         b.shelter_name, b.shelter_location, b.ulb_name, b.ward_no, b.agency_name
   FROM beneficiaries b
 `;
         let params = [];
@@ -232,7 +239,8 @@ exports.showEditList = async (req, res) => {
         const [jobTypes] = await db.query("SELECT id, job_type_name FROM job_types ORDER BY id ASC");
 
         let sql = `
-  SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status
+  SELECT b.id, b.beneficiary_name, b.age, b.gender, b.location, b.stay_type, b.employment_status,
+         b.shelter_name, b.shelter_location, b.ulb_name, b.ward_no, b.agency_name
   FROM beneficiaries b
 `;
         let params = [];
@@ -400,6 +408,12 @@ exports.updateBeneficiary = async (req, res) => {
     } = req.body;
 
     const photo = req.file ? req.file.buffer : null;
+
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(contact_no))
+        return res.status(400).json({ error: 'Contact number must be a valid 10-digit Indian mobile number.' });
+    if (!mobileRegex.test(alternate_mobile))
+        return res.status(400).json({ error: 'Alternate mobile must be a valid 10-digit Indian mobile number.' });
 
     // Coerce blank optional fields to null (same rules as addBeneficiary).
     // Mandatory: beneficiary_name, contact_no, alternate_mobile + Office Use fields.
