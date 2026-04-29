@@ -99,6 +99,87 @@ const [others] = await db.query(
   }
 };
 
+// List all matched beneficiaries
+exports.listMatches = async (req, res) => {
+  const searchQuery = req.query.search || '';
+  try {
+    let sql = `
+      SELECT
+        bjm.beneficiary_id,
+        bjm.role_in_company,
+        bjm.employment_start_date,
+        bjm.remarks,
+        b.beneficiary_name,
+        b.contact_no,
+        jp.provider_name
+      FROM beneficiary_job_matching bjm
+      JOIN beneficiaries b  ON b.id  = bjm.beneficiary_id
+      JOIN job_providers  jp ON jp.id = bjm.provider_id
+    `;
+    const params = [];
+    if (searchQuery) {
+      sql += ' WHERE b.beneficiary_name LIKE ? OR jp.provider_name LIKE ?';
+      params.push(`%${searchQuery}%`, `%${searchQuery}%`);
+    }
+    sql += ' ORDER BY bjm.employment_start_date DESC, b.beneficiary_name';
+
+    const [matches] = await db.query(sql, params);
+    res.render('job-matched-list', { matches, searchQuery });
+  } catch (err) {
+    console.error(err);
+    res.send('Error loading matched beneficiaries.');
+  }
+};
+
+// View detail of a single match
+exports.viewMatchDetail = async (req, res) => {
+  const beneficiaryId = req.params.beneficiaryId;
+  try {
+    const [[match]] = await db.query(
+      `
+      SELECT
+        bjm.beneficiary_id,
+        bjm.provider_id,
+        bjm.role_in_company,
+        bjm.employment_start_date,
+        bjm.remarks,
+        b.beneficiary_name,
+        b.contact_no,
+        b.occupation_id,
+        b.location,
+        jp.provider_name,
+        jp.contact_person,
+        jp.phone,
+        jp.city,
+        jp.state
+      FROM beneficiary_job_matching bjm
+      JOIN beneficiaries b  ON b.id  = bjm.beneficiary_id
+      JOIN job_providers  jp ON jp.id = bjm.provider_id
+      WHERE bjm.beneficiary_id = ?
+      `,
+      [beneficiaryId]
+    );
+
+    if (!match) return res.send('Match record not found.');
+
+    const occIds = String(match.occupation_id || '').split(',').map(s => s.trim()).filter(Boolean);
+    let occupationNames = [];
+    if (occIds.length) {
+      const placeholders = occIds.map(() => '?').join(',');
+      const [jtRows] = await db.query(
+        `SELECT job_type_name FROM job_types WHERE id IN (${placeholders})`,
+        occIds
+      );
+      occupationNames = jtRows.map(r => r.job_type_name);
+    }
+
+    res.render('job-match-detail', { match, occupationNames });
+  } catch (err) {
+    console.error(err);
+    res.send('Error loading match detail.');
+  }
+};
+
 // Create a match entry in beneficiary_job_matching, mark beneficiary as employed, then return to list
 exports.createMatch = async (req, res) => {
     const { providerId, beneficiaryId } = req.params;

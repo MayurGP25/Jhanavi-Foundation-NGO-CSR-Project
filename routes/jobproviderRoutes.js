@@ -21,9 +21,14 @@ router.post("/add", requireLogin, jobProvider.addJobProvider);
 //  View All Job Providers
 // =========================
 router.get("/view", requireLogin, jobProvider.viewJobProviders);
- 
+
 // =========================
-//  Edit Job Provider
+//  Job Provider Detail
+// =========================
+router.get("/detail/:id", requireLogin, jobProvider.showJobProviderDetail);
+
+// =========================
+//  Edit Job Provider
 // =========================
 router.get("/edit/:id", requireLogin, jobProvider.showEditForm);
 router.post("/edit/:id", requireLogin, jobProvider.updateJobProvider);

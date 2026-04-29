@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Job Provider</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #e3f2fd, #f5f7fb);
+            min-height: 100vh;
+        }
+        .app-header {
+            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.92);
+        }
+        .surface {
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+        }
+        .btn-pill { border-radius: 999px; }
+        .section-title {
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 0.02em;
+            color: #0f172a;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+        }
+        .form-control, textarea { border-radius: 12px; }
+        textarea { min-height: 110px; }
+        .jt-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #e8f0fe;
+            color: #1a56db;
+            border: 1px solid rgba(26, 86, 219, 0.2);
+            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+        .jt-badge-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            min-height: 38px;
+            align-items: center;
+            padding: 0.375rem 0.5rem;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark app-header shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-semibold" href="/dashboard">NGO Digital Dashboard</a>
+            <div class="d-flex gap-2">
+                <a href="/jobproviders/view" class="btn btn-outline-light btn-sm btn-pill">Back</a>
+                <a href="/logout" class="btn btn-outline-light btn-sm btn-pill">Sign Out</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <h1 class="fw-bold mb-1" style="color: #000;">View Job Provider</h1>
+                <p class="text-muted mb-0">Job provider information (read-only)</p>
+            </div>
+        </div>
+
+        <div class="card surface">
+            <div class="card-body p-4 p-md-5">
+
+                <div class="section-title">Organization</div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Provider Name</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.provider_name %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Contact Person</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.contact_person || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Phone</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.phone || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.email || '' %>" disabled>
+                    </div>
+                </div>
+
+                <div class="section-title">Job Types</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Assigned Job Types</label>
+                        <div class="jt-badge-wrap">
+                            <% if (selectedJobTypeNames.length) { %>
+                                <% selectedJobTypeNames.forEach(name => { %>
+                                    <span class="jt-badge"><%= name %></span>
+                                <% }); %>
+                            <% } else { %>
+                                <span style="color:#6c757d;font-size:.9rem;">—</span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Address</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Address</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.address || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">City</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.city || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">State</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.state || '' %>" disabled>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold">Pincode</label>
+                        <input type="text" class="form-control" value="<%= jobProvider.pincode || '' %>" disabled>
+                    </div>
+                </div>
+
+                <div class="section-title">Additional Notes</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea class="form-control" rows="3" disabled><%= jobProvider.notes || '' %></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-4">
+                    <a href="/jobproviders/view" class="btn btn-outline-secondary btn-pill">Back to List</a>
+                    <a href="/jobproviders/edit/<%= jobProvider.id %>" class="btn btn-warning btn-pill">Edit Provider</a>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <% if (successMessage) { %>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+        <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold">
+                    <% if (successMessage === 'added') { %>
+                        Job Provider added successfully.
+                    <% } else { %>
+                        Job Provider updated successfully.
+                    <% } %>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <% const errorParam = typeof query !== 'undefined' ? query.error : null; %>
+    <% if (errorParam === 'has_matches') { %>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+        <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold">Cannot delete: this provider has active job matches.</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            ['successToast', 'errorToast'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) new bootstrap.Toast(el, { delay: 5000 }).show();
+            });
+        });
+    </script>
+</body>
+</html>
